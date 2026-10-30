@@ -43,6 +43,7 @@ new p5((p) => {
 
   p.setup = () => {
     p.createCanvas(W, H).parent('rabbit-view');
+    attachInput();
     rabbit.on('hello', (m) => fromState(m.state));
     rabbit.on('state', (m) => fromState(m.state));
     rabbit.on('ears', (m) => { if (dragging < 0) { target[0] = m.left; target[1] = m.right; } });
@@ -140,35 +141,50 @@ new p5((p) => {
     return Math.round(p.constrain((a / Math.PI) * 16, 0, 16));
   }
 
-  const inCanvas = () => p.mouseX >= 0 && p.mouseY >= 0 && p.mouseX <= W && p.mouseY <= H;
+  // Input uses native Pointer Events (finger, pencil and mouse alike) rather
+  // than p5's mouse/touch mapping, which doesn't fire on iPad Safari. The
+  // colour picker opens from 'click', which Safari counts as a user action.
+  function canvasPoint(e) {
+    const r = p.canvas.getBoundingClientRect();
+    return [((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height];
+  }
 
-  p.mousePressed = () => {
-    if (!inCanvas() || !rabbit.rabbitConnected) return;
-    const led = hitLed(p.mouseX, p.mouseY);
-    if (led >= 0) {
-      Controls.pickLedColor(led, leds[led]);
-      return false;
-    }
-    dragging = hitEar(p.mouseX, p.mouseY);
-    if (dragging >= 0) return false;
-  };
-
-  p.mouseDragged = () => {
-    if (dragging < 0) return;
-    const pos = earFromPointer(dragging, p.mouseX, p.mouseY);
-    target[dragging] = pos;
-    if (dragging === 0) rabbit.ears(pos, null, { throttle: true });
-    else rabbit.ears(null, pos, { throttle: true });
-    return false;
-  };
-
-  p.mouseReleased = () => {
-    if (dragging < 0) return;
-    const i = dragging;
-    dragging = -1;
-    const pos = target[i];
-    localUntil = Date.now() + 2500;
-    (i === 0 ? rabbit.ears(pos, null) : rabbit.ears(null, pos)).catch(() => {});
-    return false;
-  };
+  function attachInput() {
+    const c = p.canvas;
+    c.addEventListener('pointerdown', (e) => {
+      if (!rabbit.rabbitConnected) return;
+      const [x, y] = canvasPoint(e);
+      if (hitLed(x, y) >= 0) return;  // handled on click
+      dragging = hitEar(x, y);
+      if (dragging >= 0) {
+        c.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      }
+    });
+    c.addEventListener('pointermove', (e) => {
+      if (dragging < 0) return;
+      const [x, y] = canvasPoint(e);
+      const pos = earFromPointer(dragging, x, y);
+      target[dragging] = pos;
+      if (dragging === 0) rabbit.ears(pos, null, { throttle: true });
+      else rabbit.ears(null, pos, { throttle: true });
+      e.preventDefault();
+    });
+    const endDrag = () => {
+      if (dragging < 0) return;
+      const i = dragging;
+      dragging = -1;
+      const pos = target[i];
+      localUntil = Date.now() + 2500;
+      (i === 0 ? rabbit.ears(pos, null) : rabbit.ears(null, pos)).catch(() => {});
+    };
+    c.addEventListener('pointerup', endDrag);
+    c.addEventListener('pointercancel', endDrag);
+    c.addEventListener('click', (e) => {
+      if (!rabbit.rabbitConnected) return;
+      const [x, y] = canvasPoint(e);
+      const led = hitLed(x, y);
+      if (led >= 0) Controls.pickLedColor(led, leds[led]);
+    });
+  }
 }, document.getElementById('rabbit-view'));

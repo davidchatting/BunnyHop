@@ -241,3 +241,15 @@ Clarifying answers are included where they changed the direction of the work.
 > this project and repo should now be called BunnyHop update everytthing
 
 (Renamed from nabaztag-bridge. The earlier, unrelated BunnyHop experiment had already been renamed BunnyHop-old.)
+
+## 18.
+
+> ok, assuming this esp32 can do this, I want to create two wireless networks, a private side that is open but mac address locked to the nabaztag and a public side that hosts the server and joins the local wifi network, if the credits for the public network are unset or the network is unavailable then it will be another self hosted network and captive portal. the webapp will allow the local network credentials to be set. once on the local network it should be discoverable as bunnyhop.local
+
+(The ESP32 can host only one network; asked how the fallback should work.) Answer: "option 1 but the webapp still needs to be accesible, so that we don't have to join the local wifi if we don't want" - i.e. fallback opens the rabbit's network (MAC lock lifted) with a captive portal to the full web app.
+
+> also private means open (no password) but not adevrtised
+
+## 19.
+
+> does the interactive rabbit work with touch events on ipad?
