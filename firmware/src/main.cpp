@@ -52,6 +52,7 @@ static void serialCommand(String line) {
     else if (cmd == "probe") wifimgr::probe();
     else if (cmd == "pair") wifimgr::requestPair();
     else if (cmd == "forget") wifimgr::forget();
+    else if (cmd == "kick") wifimgr::kickRabbit((rest.toInt() > 0 ? rest.toInt() : 30) * 1000UL);
     else if (cmd == "restart") ESP.restart();
     else if (cmd == "ears") {
         int l = -1, r = -1;

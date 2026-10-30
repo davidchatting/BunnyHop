@@ -63,6 +63,11 @@ Chor &Chor::ledOff(uint8_t delay, uint8_t led) {
     return *this;
 }
 
+Chor &Chor::allLeds(uint8_t delay, uint8_t r, uint8_t g, uint8_t b) {
+    body.insert(body.end(), {delay, 0x09, r, g, b});
+    return *this;
+}
+
 Chor &Chor::motor(uint8_t delay, uint8_t ear, uint8_t pos, uint8_t dir) {
     body.insert(body.end(), {delay, 0x08, ear, pos, dir});
     return *this;

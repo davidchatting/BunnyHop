@@ -22,6 +22,7 @@ bool probe();
 bool pair();
 void requestPair();  // run pair() from the loop (safe to call from handlers)
 void forget();
+void kickRabbit(uint32_t offMs);  // drop the AP so a rabbit with a stale session reboots
 void statusJson(JsonObject o);
 
 }  // namespace wifimgr

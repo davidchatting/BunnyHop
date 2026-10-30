@@ -13,8 +13,10 @@ ap.add_argument("-t", "--time", type=float, default=5.0, help="seconds to listen
 ap.add_argument("commands", nargs="*")
 a = ap.parse_args()
 
-s = serial.Serial(a.port, 115200, timeout=0.1)
-s.dtr = False; s.rts = False  # don't reset the board on open
+s = serial.Serial()
+s.port, s.baudrate, s.timeout = a.port, 115200, 0.1
+s.dtr = False; s.rts = False  # set before open so the board isn't reset
+s.open()
 def drain(secs):
     end = time.time() + secs
     while time.time() < end:

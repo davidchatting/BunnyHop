@@ -94,6 +94,10 @@ void execute(JsonObjectConst cmd, JsonObject reply) {
                 rabbit::Rgb col{0, 0, 0};
                 parseColor(s["color"], col);
                 ch.led(d, s["led"] | 0, col.r, col.g, col.b);
+            } else if (t == "all") {
+                rabbit::Rgb col{0, 0, 0};
+                parseColor(s["color"], col);
+                ch.allLeds(d, col.r, col.g, col.b);
             } else if (t == "motor") {
                 ch.motor(d, s["ear"] | 0, s["pos"] | 0, s["dir"] | 0);
             }

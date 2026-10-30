@@ -46,6 +46,7 @@ class Chor {
     // LED ids follow OpenJabNab: 0 bottom, 1 left, 2 middle, 3 right, 4 top (nose)
     Chor &led(uint8_t delay, uint8_t led, uint8_t r, uint8_t g, uint8_t b);
     Chor &ledOff(uint8_t delay, uint8_t led);
+    Chor &allLeds(uint8_t delay, uint8_t r, uint8_t g, uint8_t b);  // opcode 9 (bootcode v16+)
     // ear 0 = left, 1 = right; pos 0..16; dir 0 = forward, 1 = backward
     Chor &motor(uint8_t delay, uint8_t ear, uint8_t pos, uint8_t dir);
     Bytes build() const;

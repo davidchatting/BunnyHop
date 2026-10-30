@@ -18,15 +18,22 @@ static bool pairRequested = false;
 static uint32_t lastRabbitContact = 0;
 static uint32_t lastScan = 0;
 static String lastPairResult = "never";
-static String setupFields;  // "name=value&..." as scraped from the setup form
+static String setupFields;
+// stale-session watchdog (see kickRabbit)
+static volatile bool rabbitAssociated = false;
+static volatile uint32_t rabbitAssociatedAt = 0;
+static uint32_t lastKick = 0;  // "name=value&..." as scraped from the setup form
 
 static void startAp(const String &ssid) {
     ap = ssid;
     IPAddress ip(AP_IP_A, AP_IP_B, AP_IP_C, AP_IP_D);
     WiFi.softAPConfig(ip, ip, IPAddress(255, 255, 255, 0));
-    // Open network: the Nabaztag:tag's WPA support is limited, and the
-    // rabbit must be able to join. See README "Security".
+    // Must be an open network for the rabbit. See README "Security".
     WiFi.softAP(ap.c_str(), nullptr, AP_CHANNEL, 0, AP_MAX_CLIENTS);
+    // The rabbit's radio only decodes 802.11b (DSSS/CCK). With g/n enabled
+    // the ESP32 sends it OFDM frames it can't receive, so the AP is b-only.
+    esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B);
+    esp_wifi_set_event_mask(WIFI_EVENT_MASK_NONE);  // enables AP probe-request events
     LOGI("wifi", "AP '%s' up at %s (channel %d)", ap.c_str(), WiFi.softAPIP().toString().c_str(), AP_CHANNEL);
 }
 
@@ -37,12 +44,51 @@ static String ssidFromBssid(const String &bssid) {
     return String(AP_SSID_PREFIX) + s.substring(6);
 }
 
+// AP-side diagnostics: who associates, who gets an address, and whether
+// the rabbit (Violet OUI 00:13:d3) is probing for our SSID at all.
+static void onWifiEvent(arduino_event_id_t ev, arduino_event_info_t info) {
+    char mac[18];
+    switch (ev) {
+        case ARDUINO_EVENT_WIFI_AP_STACONNECTED: {
+            const uint8_t *m = info.wifi_ap_staconnected.mac;
+            snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
+            bool isRabbit = m[0] == 0x00 && m[1] == 0x13 && m[2] == 0xd3;
+            if (isRabbit) {
+                rabbitAssociated = true;
+                rabbitAssociatedAt = millis();
+            }
+            LOGI("wifi", "station %s associated%s", mac, isRabbit ? " (rabbit)" : "");
+            break;
+        }
+        case ARDUINO_EVENT_WIFI_AP_STADISCONNECTED: {
+            const uint8_t *m = info.wifi_ap_stadisconnected.mac;
+            snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
+            if (m[0] == 0x00 && m[1] == 0x13 && m[2] == 0xd3) rabbitAssociated = false;
+            LOGI("wifi", "station %s left", mac);
+            break;
+        }
+        case ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED:
+            LOGI("wifi", "DHCP lease %s", IPAddress(info.wifi_ap_staipassigned.ip.addr).toString().c_str());
+            break;
+        case ARDUINO_EVENT_WIFI_AP_PROBEREQRECVED: {
+            const uint8_t *m = info.wifi_ap_probereqrecved.mac;
+            static uint32_t last = 0;
+            if (m[0] == 0x00 && m[1] == 0x13 && m[2] == 0xd3 && millis() - last > 2000) {
+                last = millis();
+                LOGI("wifi", "probe request from rabbit (rssi %d)", info.wifi_ap_probereqrecved.rssi);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 void begin() {
+    WiFi.onEvent(onWifiEvent);
     WiFi.persistent(false);
     WiFi.mode(WIFI_AP_STA);
     WiFi.setSleep(false);
-    // the Nabaztag:tag radio is 802.11b - keep b enabled on the AP
-    esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
     String saved = store::get(K_AP_SSID);
     startAp(saved.length() ? saved : String(AP_FALLBACK_SSID));
     if (!saved.length()) {
@@ -63,8 +109,8 @@ String scanForRabbit(String *bssidOut, int *channelOut) {
     String found;
     for (int i = 0; i < n; i++) {
         String ssid = WiFi.SSID(i);
-        bool isSetup = ssid.startsWith(RABBIT_SETUP_SSID_PREFIX) && !ssid.startsWith(AP_SSID_PREFIX) &&
-                       ssid.length() <= strlen(RABBIT_SETUP_SSID_PREFIX) + 2;
+        // setup-mode SSID is exactly "Nabaztag" + 2 hex digits (ours is longer)
+        bool isSetup = ssid.startsWith(RABBIT_SETUP_SSID_PREFIX) && ssid.length() == strlen(RABBIT_SETUP_SSID_PREFIX) + 2;
         LOGI("wifi", "  %-24s ch%-2d %4ddBm %s%s", ssid.c_str(), WiFi.channel(i), WiFi.RSSI(i), WiFi.BSSIDstr(i).c_str(),
              isSetup ? "  <- rabbit setup AP" : "");
         if (isSetup && found.isEmpty()) {
@@ -153,6 +199,7 @@ static std::vector<std::pair<String, String>> scrapeForm(const String &html) {
         if (inp < 0 && sel < 0) break;
         if (sel < 0 || (inp >= 0 && inp < sel)) {
             int e = html.indexOf('>', inp);
+            if (e < 0) break;  // truncated page
             String tag = html.substring(inp, e + 1);
             String type = attr(tag, "type");
             type.toLowerCase();
@@ -166,6 +213,7 @@ static std::vector<std::pair<String, String>> scrapeForm(const String &html) {
             i = e + 1;
         } else {
             int e = low.indexOf("</select>", sel);
+            if (e < 0) break;  // truncated page
             String block = html.substring(sel, e);
             String name = attr(block.substring(0, block.indexOf('>') + 1), "name");
             String val, first;
@@ -218,6 +266,16 @@ static String textOnly(const String &html) {
     return out;
 }
 
+// First whitespace-delimited word after a label in the page text
+static String after(const String &text, const char *label) {
+    int i = text.indexOf(label);
+    if (i < 0) return "";
+    String rest = text.substring(i + strlen(label));
+    rest.trim();
+    int sp = rest.indexOf(' ');
+    return sp < 0 ? rest : rest.substring(0, sp);
+}
+
 bool probe() {
     String ssid, bssid;
     int ch = 0;
@@ -229,8 +287,13 @@ bool probe() {
     }
     String body;
     rabbitGet("/", body);
-    for (size_t i = 0; i < body.length(); i += 200) LOGI("page", "%s", body.substring(i, i + 200).c_str());
+    String text = textOnly(body);
+    for (size_t i = 0; i < text.length(); i += 160) {
+        LOGI("page", "%s", text.substring(i, i + 160).c_str());
+        delay(20);  // don't overrun the serial buffer
+    }
     for (auto &f : scrapeForm(body)) LOGI("form", "%s = '%s'", f.first.c_str(), f.second.c_str());
+    LOGI("wifi", "serial %s, loader firmware %s", after(text, "Serial number:").c_str(), after(text, "Firmware:").c_str());
     leaveSetup();
     return true;
 }
@@ -252,8 +315,12 @@ bool pair() {
         lastPairResult = "could not join " + ssid;
         return false;
     }
+    // The rabbit's TCP stack sometimes drops the tail of the page; retry
+    // until the whole form has arrived.
     String page;
-    if (!rabbitGet("/", page)) {
+    bool gotPage = false;
+    for (int attempt = 0; attempt < 4 && !gotPage; attempt++) gotPage = rabbitGet("/", page) && page.indexOf("</form>") > 0;
+    if (!gotPage) {
         leaveSetup();
         lastPairResult = "setup page not reachable";
         return false;
@@ -261,8 +328,11 @@ bool pair() {
     auto fields = scrapeForm(page);
     // Our AP SSID: keep the existing one when re-pairing the same rabbit
     String newAp = store::get(K_AP_SSID);
-    if (newAp.isEmpty() || store::get(K_SETUP_BSSID) != bssid) newAp = ssidFromBssid(bssid);
-    String info = textOnly(page).substring(0, 400);
+    String text = textOnly(page);
+    String serial = after(text, "Serial number:");
+    String firmware = after(text, "Firmware:");
+    if (newAp.isEmpty() || store::get(K_SETUP_BSSID) != bssid) newAp = ssidFromBssid(serial.length() == 17 ? serial : bssid);
+    String info = "serial " + serial + ", loader firmware " + firmware + ", setup SSID " + ssid;
     store::set(K_SETUP_INFO, info);
     store::set(K_SETUP_BSSID, bssid);
     store::set(K_SETUP_SSID, ssid);
@@ -271,12 +341,16 @@ bool pair() {
 
     // Field meanings, from the rabbit's own setup form (see docs/PROTOCOL.md)
     std::map<String, String> overrides = {
-        {"w", newAp},           // SSID to join
-        {"k", ""},              // typed SSID (unused when w is set)
+        {"w", "-"},             // SSID picked from the rabbit's scan list: none
+        {"k", newAp},           // "OR type your network name"; our AP may not be in its list yet
         {"m", "0"},             // encryption: 0 none
         {"n", ""},              // key
         {"f", "1"},             // DHCP on
         {"a", RABBIT_PLATFORM}, // "Violet Platform"
+        // A browser also sends the clicked submit button. Without
+        // z="Update and Start" the rabbit saves the settings but stays in
+        // setup mode instead of restarting.
+        {"z", "Update and Start"},
     };
     String q;
     std::vector<String> seen;
@@ -311,6 +385,19 @@ bool pair() {
 
 void requestPair() { pairRequested = true; }
 
+void kickRabbit(uint32_t offMs) {
+    // A rabbit whose XMPP session died with a bridge restart never notices
+    // (the bootcode sends no XMPP pings) and a deauth alone just makes it
+    // re-associate. Taking the AP away long enough makes it reboot and
+    // start over from bc.jsp.
+    LOGI("wifi", "AP off for %lus to make the rabbit restart", (unsigned long)(offMs / 1000));
+    WiFi.softAPdisconnect(false);
+    WiFi.mode(WIFI_STA);
+    delay(offMs);
+    WiFi.mode(WIFI_AP_STA);
+    startAp(ap);
+}
+
 void forget() {
     store::remove(K_AP_SSID);
     store::remove(K_SETUP_BSSID);
@@ -328,8 +415,18 @@ void loop() {
         if (!pair()) LOGI("wifi", "pairing: %s", lastPairResult.c_str());
         return;
     }
-    // Rabbit missing for a while: look for one in setup mode periodically
     uint32_t now = millis();
+    // Rabbit on the AP but silent: a session left over from before a bridge
+    // restart. Make it reboot.
+    auto &rs = rabbit::state();
+    uint32_t lastTraffic = max(rs.lastSeen, (uint32_t)rabbitAssociatedAt);
+    if (rabbitAssociated && !rs.xmpp && now - lastTraffic > STALE_RABBIT_MS && (!lastKick || now - lastKick > KICK_INTERVAL_MS)) {
+        lastKick = now;
+        LOGI("wifi", "rabbit associated but silent for %lus - stale session", (unsigned long)((now - lastTraffic) / 1000));
+        kickRabbit(KICK_AP_OFF_MS);
+        return;
+    }
+    // Rabbit missing for a while: look for one in setup mode periodically
     if (AUTO_PAIR && now - lastRabbitContact > RABBIT_RESCAN_AFTER_MS && now - lastScan > RABBIT_RESCAN_INTERVAL_MS) {
         lastScan = now;
         String bssid;
