@@ -259,3 +259,9 @@ Clarifying answers are included where they changed the direction of the work.
 > update the hello message to something more fun, also better chime, big ben? also ipad still doesn't seem to work?
 
 > no that message is not fun, just say Hello I'm nabaztag, that'll be fine
+
+## 21.
+
+> that works well
+
+(Confirmed on a real iPad: tapping lights and dragging ears.)

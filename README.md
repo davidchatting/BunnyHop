@@ -40,6 +40,7 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 | Audio playback (MP3 from the bridge) | **Physically tested** | Camera microphone |
 | Button: single and double click | **Physically tested** | Events received while pressing |
 | Microphone: long-press recording | **Physically tested** | 2.6 s IMA ADPCM recording received, decoded |
+| Web app on iPad (touch: tap lights, drag ears) | **Physically tested** | Confirmed by the user on a real iPad |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
 | RFID tag reads | Protocol-verified | Bootcode calls `/vl/rfid.jsp?t=…`; **untested - no compatible tag available** (see below) |
