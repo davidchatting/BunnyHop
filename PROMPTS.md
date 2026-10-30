@@ -265,3 +265,9 @@ Clarifying answers are included where they changed the direction of the work.
 > that works well
 
 (Confirmed on a real iPad: tapping lights and dragging ears.)
+
+## 22.
+
+> works great - but there is no text i the save wifi creditals button?
+
+(Home Wi-Fi confirmed working; the button text was invisible in iPad dark mode.)

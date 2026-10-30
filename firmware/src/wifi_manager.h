@@ -30,6 +30,7 @@ void statusJson(JsonObject o);
 void setLan(const String &ssid, const String &pass);
 void requestLanScan();  // result arrives as a "lanScan" event
 bool lanConnected();
+void pauseLan(uint32_t ms);  // debug: drop home Wi-Fi for a while (simulated outage)
 // True if a request arrived over the rabbit's network (vs home Wi-Fi)
 bool fromRabbitNetwork(IPAddress localIp);
 

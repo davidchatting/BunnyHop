@@ -23,7 +23,7 @@ static String serialLine;
 static void printHelp() {
     Serial.println(
         "commands:\n"
-        "  status | scan | probe | pair | forget | restart | kick [s] | diag [node] | dump PATH\n"
+        "  status | scan | probe | pair | forget | restart | kick [s] | diag [node] | dump PATH | lanpause [s]\n"
         "  {json}            any API command, e.g. {\"cmd\":\"ears\",\"left\":4,\"right\":10}\n"
         "  ears L R | led N #rrggbb | play URL | prog TEXT(\\n for newline)\n"
         "  raw HEX | sleep | wake | reboot");

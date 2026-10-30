@@ -40,6 +40,7 @@ static uint8_t rabbitMac[6];
 static bool haveRabbitMac = false;
 static bool scanRequested = false;
 static bool mdnsStarted = false;
+static uint32_t lanPausedUntil = 0;  // debug: simulate a home Wi-Fi outage
 
 static bool parseMac(const String &s, uint8_t out[6]) {
     return sscanf(s.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &out[0], &out[1], &out[2], &out[3], &out[4], &out[5]) == 6;
@@ -58,7 +59,10 @@ static void deauthOthers() {
         const uint8_t *m = list.sta[i].mac;
         if (isRabbitMac(m)) continue;
         uint16_t aid;
-        if (esp_wifi_ap_get_sta_aid(m, &aid) == ESP_OK) esp_wifi_deauth_sta(aid);
+        if (esp_wifi_ap_get_sta_aid(m, &aid) == ESP_OK) {
+            LOGI("wifi", "disconnecting %02x:%02x:%02x:%02x:%02x:%02x (network is now rabbit-only)", m[0], m[1], m[2], m[3], m[4], m[5]);
+            esp_wifi_deauth_sta(aid);
+        }
     }
 }
 
@@ -494,6 +498,14 @@ void setLan(const String &ssid, const String &pass) {
 
 void requestLanScan() { scanRequested = true; }
 
+void pauseLan(uint32_t ms) {
+    lanPausedUntil = millis() + ms;
+    lanAttempting = false;
+    WiFi.disconnect(false, false);
+    lanUp = false;
+    LOGI("wifi", "home Wi-Fi paused for %lus (simulated outage)", (unsigned long)(ms / 1000));
+}
+
 static void lanStart() {
     WiFi.disconnect(false, false);
     lanUp = false;
@@ -512,11 +524,12 @@ static void lanStart() {
 }
 
 static void lanLoop() {
-    uint32_t now = millis();
     if (lanRequested && !inSetup) {
         lanRequested = false;
         lanStart();
     }
+    // read the clock after lanStart(), or the timeout check below underflows
+    uint32_t now = millis();
     if (lanAttempting && lanUp) {
         lanAttempting = false;
         lanState = "connected";
@@ -536,7 +549,8 @@ static void lanLoop() {
         LOGI("wifi", "home Wi-Fi lost");
         rabbit::emit("lan", [](JsonObject o) { o["state"] = "unavailable"; });
         lanAttemptAt = now - LAN_RETRY_MS + 5000;  // retry soon
-    } else if (!lanAttempting && !lanUp && lanSsid.length() && !inSetup && now - lanAttemptAt > LAN_RETRY_MS) {
+    } else if (!lanAttempting && !lanUp && lanSsid.length() && !inSetup && now - lanAttemptAt > LAN_RETRY_MS &&
+               (int32_t)(now - lanPausedUntil) >= 0) {
         lanStart();
     }
 

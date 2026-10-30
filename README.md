@@ -41,6 +41,8 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 | Button: single and double click | **Physically tested** | Events received while pressing |
 | Microphone: long-press recording | **Physically tested** | 2.6 s IMA ADPCM recording received, decoded |
 | Web app on iPad (touch: tap lights, drag ears) | **Physically tested** | Confirmed by the user on a real iPad |
+| Home Wi-Fi + `http://bunnyhop.local/` | **Physically tested** | Joined the user's network; page served over mDNS |
+| Rabbit network hidden + rabbit-only while home Wi-Fi is up | **Physically tested** | Rabbit followed the channel change and rejoined the hidden network in ~20-40 s |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
 | RFID tag reads | Protocol-verified | Bootcode calls `/vl/rfid.jsp?t=…`; **untested - no compatible tag available** (see below) |
