@@ -525,7 +525,10 @@ String resource() { return res; }
 
 bool sendPacket(const packets::Bytes &t) {
     if (!connected()) return false;
-    String msg = "<message from='net.openjabnab.platform@" XMPP_DOMAIN "/services' to='" + user + "@" XMPP_DOMAIN "/" + res +
+    // Addressed to the "urgent" resource: the bootcode evaluates those
+    // immediately (_isResourceValid), whereas packets for "idle" are queued
+    // while a program or choreography is running.
+    String msg = "<message from='net.openjabnab.platform@" XMPP_DOMAIN "/services' to='" + user + "@" XMPP_DOMAIN "/urgent" +
                  "' id='OJaNa-" + String(msgNb++) + "'><packet xmlns='violet:packet' format='1.0' ttl='604800'>" +
                  packets::base64(t) + "</packet></message>";
     write(msg);

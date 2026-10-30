@@ -4,6 +4,7 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include "api.h"
+#include "chor_server.h"
 #include "config.h"
 #include "eventlog.h"
 #include "net_services.h"
@@ -87,6 +88,7 @@ void setup() {
     wifimgr::begin();
     net_services::begin();
     xmpp::begin();
+    chor_server::begin(CHOR_PORT);
 
     rabbit_http::begin(server);
     api::begin(server);
@@ -108,6 +110,7 @@ void setup() {
 void loop() {
     wifimgr::loop();
     xmpp::loop();
+    chor_server::loop();
     net_services::loop();
     api::loop();
     while (Serial.available()) {

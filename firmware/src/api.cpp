@@ -3,6 +3,7 @@
 #include "config.h"
 #include "eventlog.h"
 #include "net_services.h"
+#include "chor_server.h"
 #include "rabbit.h"
 #include "wifi_manager.h"
 #include "xmpp_server.h"
@@ -29,10 +30,13 @@ static bool parseColor(JsonVariantConst v, rabbit::Rgb &c) {
     return false;
 }
 
-// "/audio/x.mp3" -> "http://192.168.4.1/audio/x.mp3"
+// "/audio/x.mp3" -> "http://192.168.4.1:8080/audio/x.mp3" (the rabbit
+// resource server, see chor_server.h); other paths go to the web server.
 static String absUrl(const String &u) {
     if (u.startsWith("http://")) return u;
-    return String("http://" AP_IP_STR) + (u.startsWith("/") ? "" : "/") + u;
+    String p = (u.startsWith("/") ? "" : "/") + u;
+    if (p.startsWith("/audio/")) return String("http://" AP_IP_STR ":") + String(CHOR_PORT) + p;
+    return String("http://" AP_IP_STR) + p;
 }
 
 static void listAudio(JsonArray arr) {
@@ -130,6 +134,11 @@ void execute(JsonObjectConst cmd, JsonObject reply) {
         // asks the bootcode for its internal state; reply arrives as a "diagnostics" event
         String node = cmd["node"] | "getrunningstate";
         if (!(ok = xmpp::queryRabbit(node.c_str()))) err = "rabbit not connected";
+    } else if (c == "tune") {
+        // experimental transport knobs (see docs/PROTOCOL.md)
+        if (cmd["linger"].is<int>()) chor_server::lingerMs = cmd["linger"];
+        reply["data"]["linger"] = chor_server::lingerMs;
+        ok = true;
     } else if (c == "time") {
         net_services::setTime(cmd["epochMs"].as<uint64_t>());
         ok = true;

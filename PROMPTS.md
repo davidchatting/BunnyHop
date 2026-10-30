@@ -173,3 +173,27 @@ Clarifying answers are included where they changed the direction of the work.
 > yes clear the unused packages, nabaztag-bridge is fine
 
 (Permission to free disk space by removing unused PlatformIO packages; repo name confirmed.)
+
+## 4.
+
+> it's in setup mode now, lights are blue
+
+## 5.
+
+> no it should restart automatically with the new details. this is a 2005 implementatiojn of wifi so check the network, names, etc are all within the old specs
+
+> it must be an open network
+
+(Led to: 802.11b-only AP, hyphen-free SSID, and finding that `b.htm` needs `z=Update+and+Start`.)
+
+## 6.
+
+> I turned the volume from off to max
+
+(The rabbit's volume wheel had been at zero, which is why audio programs were silent.)
+
+## 7.
+
+> do you have a real-time serial interafce to send messages without recompiling the esp32 code?
+
+(Yes - every API command can be sent as JSON over the USB serial console; see README "Serial console".)

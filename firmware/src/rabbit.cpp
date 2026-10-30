@@ -119,7 +119,9 @@ bool setEars(int left, int right, String *err) {
     return send({packets::ambient(s)}, err, what);
 }
 
-static String programHeader() { return "ID " + String(programId++) + "\n"; }
+static String programHeader() {
+    return "ID " + String(programId++) + "\n";
+}
 
 static uint32_t storeChor(const packets::Bytes &file) {
     xSemaphoreTake(mtx, portMAX_DELAY);
@@ -141,18 +143,22 @@ bool chorFile(uint32_t id, packets::Bytes &out) {
 
 bool chor(const packets::Bytes &file, String *err) {
     uint32_t id = storeChor(file);
-    String prog = programHeader() + "CH http://" AP_IP_STR "/vl/chor/" + String(id) + ".chor\n";
+    String prog = programHeader() + "CH http://" AP_IP_STR ":" + String(CHOR_PORT) + "/" + String(id) + ".chor\n";
     return send({packets::message(prog)}, err, "chor");
 }
 
 bool setLeds(const Rgb colors[5], String *err) {
-    // One-frame choreography that sets every LED. The bootcode blanks all
-    // LEDs when a chor starts (msgchorstart), so always send all five.
-    packets::Chor c(1);
+    // LEDs can only be set from a choreography, and the bootcode's idle
+    // display turns them off as soon as the choreography ends. So this sends
+    // one that sets all five LEDs (a chor start blanks them all) and then
+    // holds for LED_HOLD_S. Later commands interrupt it (sent as "urgent").
+    packets::Chor c(255);  // 2.55 s frames
     for (int i = 0; i < 5; i++) {
         st.leds[i] = colors[i];
         c.led(0, i, colors[i].r, colors[i].g, colors[i].b);
     }
+    for (uint32_t held = 0; held < LED_HOLD_S; held += 650)  // 255 frames x 2.55 s
+        c.led(255, 4, colors[4].r, colors[4].g, colors[4].b);
     return chor(c.build(), err);
 }
 
@@ -175,8 +181,7 @@ bool stream(const String &url, String *err) {
 bool program(const String &lines, String *err) {
     String p = lines;
     p.replace("\r", "");
-    if (!p.endsWith("\n")) p += "\n";
-    if (!p.startsWith("ID ")) p = programHeader() + p;
+    if (!p.endsWith("\n")) p += "\n";  // sent exactly as given (no ID line added)
     return send({packets::message(p)}, err, "program");
 }
 

@@ -41,3 +41,10 @@
 #define STALE_RABBIT_MS (30UL * 1000UL)
 #define KICK_AP_OFF_MS (30UL * 1000UL)
 #define KICK_INTERVAL_MS (120UL * 1000UL)
+
+// How long LED colours set via the API are held (seconds). The rabbit can
+// only light LEDs during a choreography; see rabbit::setLeds.
+#define LED_HOLD_S 3600
+
+// Choreography files are served on their own port (see chor_server.h)
+#define CHOR_PORT 8080
