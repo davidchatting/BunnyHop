@@ -105,11 +105,13 @@ bool setEars(int left, int right, String *err) {
         left = constrain(left, 0, EAR_MAX);
         s.push_back({packets::SVC_RABBIT_LEFT_EAR, (uint8_t)left});
         st.cmdEarLeft = left;
+        st.earLeft = left;  // where it will be; hand moves update it again
     }
     if (right >= 0) {
         right = constrain(right, 0, EAR_MAX);
         s.push_back({packets::SVC_RABBIT_RIGHT_EAR, (uint8_t)right});
         st.cmdEarRight = right;
+        st.earRight = right;
     }
     if (s.empty()) {
         if (err) *err = "no ear given";

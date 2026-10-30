@@ -1,186 +1,174 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * sketch.js - main entry: connects to the bridge, starts the UI modules and
- * draws the live rabbit (p5.js instance mode).
- *
- * The drawing shows the bridge's view of the rabbit: ears at their last
- * reported/commanded position, LEDs in their last commanded colour (the
- * rabbit can't report LED colours). Click an LED to paint it, drag an ear
- * to move it.
+ * draws the rabbit (p5.js), which is also the main control:
+ *   tap a light  -> colour picker for that LED
+ *   drag an ear  -> moves that ear
+ * The drawing faces you, so the rabbit's left is on the right of the screen.
  */
 const rabbit = new RabbitClient();
 Events.init(rabbit);
 Controls.init(rabbit);
-Playground.init(rabbit);
 
 new p5((p) => {
-  const W = 360, H = 400;
-  // The drawing faces the viewer, so the rabbit's left is on screen right.
-  // LED positions: bottom, left, middle, right, nose. Ears: left, right.
-  const LED_POS = [[180, 372], [230, 285], [180, 290], [130, 285], [180, 168]];
-  const EAR_PIVOT = [[210, 120], [150, 120]];
-  let shown = [0, 0];      // ear positions being drawn (eased)
+  const W = 360, H = 420;
+  // LED order: bottom, left, middle, right, nose (rabbit's own left/right)
+  const LED_POS = [[180, 392], [232, 300], [180, 306], [128, 300], [180, 186]];
+  const EAR_PIVOT = [[212, 140], [148, 140]];  // rabbit's left, right
+  const EAR_LEN = 120;
+  const target = [0, 0];   // ear positions 0..16 to show
+  const shown = [0, 0];    // eased
+  let leds = ['#000000', '#000000', '#000000', '#000000', '#000000'];
   let dragging = -1;
-  let pulse = 0;           // flash on incoming events
-  let pulseText = '';
+  let localUntil = 0;      // ignore bridge ear state briefly after our own drag
 
-  function earTargets() {
-    const s = rabbit.state;
-    if (!s) return [0, 0];
-    const e = s.ears;
-    const pick = (rep, cmd) => (rep >= 0 ? rep : cmd >= 0 ? cmd : 0);
-    return [pick(e.left, e.cmdLeft), pick(e.right, e.cmdRight)];
+  // 0 = up, 8 = horizontal (outwards), 16 = down - as seen on the real rabbit
+  const earAngle = (i, pos) => (i === 0 ? 1 : -1) * (pos / 16) * Math.PI;
+
+  function earTip(i, pos) {
+    const [x, y] = EAR_PIVOT[i];
+    const a = earAngle(i, pos);
+    return [x + Math.sin(a) * EAR_LEN, y - Math.cos(a) * EAR_LEN];
   }
 
-  // Ear position 0..16 maps onto ~a full turn; 0 = straight up.
-  const earAngle = (pos) => (pos / 17) * p.TWO_PI;
+  function fromState(s) {
+    if (!s) return;
+    const e = s.ears || {};
+    if (dragging < 0 && Date.now() > localUntil) {
+      target[0] = e.left >= 0 ? e.left : Math.max(0, e.cmdLeft);
+      target[1] = e.right >= 0 ? e.right : Math.max(0, e.cmdRight);
+    }
+    if (s.leds) leds = s.leds.slice();
+  }
 
   p.setup = () => {
-    const c = p.createCanvas(W, H);
-    c.parent('rabbit-view');
-    rabbit.on('ears', (m) => { shown = [m.left, m.right]; flash('ears moved'); });
-    rabbit.on('button', (m) => flash(m.clicks === 2 ? 'double click' : 'click'));
-    rabbit.on('rfid', (m) => flash('RFID ' + m.tag));
-    rabbit.on('recording', () => flash('recording'));
+    p.createCanvas(W, H).parent('rabbit-view');
+    rabbit.on('hello', (m) => fromState(m.state));
+    rabbit.on('state', (m) => fromState(m.state));
+    rabbit.on('ears', (m) => { if (dragging < 0) { target[0] = m.left; target[1] = m.right; } });
   };
 
-  function flash(txt) {
-    pulse = 255;
-    pulseText = txt;
-  }
-
-  function drawEar(i, pos) {
+  function drawEar(i) {
     const [x, y] = EAR_PIVOT[i];
     p.push();
     p.translate(x, y);
-    // ears fall outwards: the rabbit's left (screen right) turns clockwise
-    p.rotate(i === 0 ? earAngle(pos) * 0.5 : -earAngle(pos) * 0.5);
-    p.stroke(200);
+    p.rotate(earAngle(i, shown[i]));
+    p.stroke(205);
     p.strokeWeight(2);
-    p.fill(dragging === i ? '#fff4e8' : 255);
-    p.rect(-17, -110, 34, 115, 17);
+    p.fill(dragging === i ? '#fff1e6' : 255);
+    p.rect(-18, -EAR_LEN, 36, EAR_LEN + 12, 18);
     p.noStroke();
-    p.fill(245, 220, 215);
-    p.rect(-8, -95, 16, 85, 8);
+    p.fill(246, 224, 218);
+    p.rect(-8, -EAR_LEN + 14, 16, EAR_LEN - 28, 8);
     p.pop();
   }
 
   p.draw = () => {
-    const s = rabbit.state;
-    const live = s && s.connected;
-    p.background(live ? '#f7f3ea' : '#ece8df');
-
-    // ease ears toward their targets unless being dragged
-    const t = earTargets();
-    for (let i = 0; i < 2; i++) if (dragging !== i) shown[i] += (t[i] - shown[i]) * 0.15;
-    drawEar(0, shown[0]);
-    drawEar(1, shown[1]);
+    const live = rabbit.rabbitConnected;
+    p.clear();
+    for (let i = 0; i < 2; i++) shown[i] += (target[i] - shown[i]) * 0.2;
+    drawEar(0);
+    drawEar(1);
 
     // body
     p.stroke(210);
     p.strokeWeight(2);
     p.fill(255);
     p.beginShape();
-    p.vertex(120, 130);
-    p.bezierVertex(60, 260, 70, 360, 70, 380);
-    p.vertex(290, 380);
-    p.bezierVertex(290, 360, 300, 260, 240, 130);
-    p.bezierVertex(220, 95, 140, 95, 120, 130);
+    p.vertex(122, 150);
+    p.bezierVertex(62, 280, 72, 380, 72, 400);
+    p.vertex(288, 400);
+    p.bezierVertex(288, 380, 298, 280, 238, 150);
+    p.bezierVertex(218, 112, 142, 112, 122, 150);
     p.endShape(p.CLOSE);
 
-    // LEDs with glow
-    const cols = (s && s.leds) || [];
+    // eyes and the button mark
+    p.noStroke();
+    p.fill(40);
+    p.ellipse(158, 168, 9, 13);
+    p.ellipse(202, 168, 9, 13);
+    p.ellipse(180, 352, 6, 14);
+
+    // lights
     LED_POS.forEach(([x, y], i) => {
-      const c = p.color(cols[i] || Controls.leds[i] || '#000000');
-      const lit = p.red(c) + p.green(c) + p.blue(c) > 20;
+      const c = p.color(leds[i] || '#000000');
+      const lit = p.red(c) + p.green(c) + p.blue(c) > 30;
       p.noStroke();
       if (lit) {
-        for (let r = 46; r > 20; r -= 6) {
-          c.setAlpha(30);
+        for (let r = 52; r > 26; r -= 6) {
+          c.setAlpha(28);
           p.fill(c);
           p.circle(x, y, r);
         }
         c.setAlpha(255);
       }
-      p.fill(lit ? c : p.color(235));
-      p.stroke(lit ? 255 : 210);
-      p.strokeWeight(1);
-      p.circle(x, y, i === 0 ? 28 : 24);
+      p.fill(lit ? c : p.color(238));
+      p.stroke(lit ? 255 : 205);
+      p.strokeWeight(1.5);
+      p.circle(x, y, i === 0 ? 30 : 26);
     });
 
-    // face
-    p.noStroke();
-    p.fill(40);
-    p.ellipse(158, 150, 9, 13);
-    p.ellipse(202, 150, 9, 13);
-    p.fill(60);
-    p.ellipse(180, 333, 6, 14); // button-ish mark like the real one
-
-    // status overlay
-    p.fill(live ? '#3a9d5d' : '#c8453a');
-    p.textSize(12);
-    p.textAlign(p.LEFT, p.TOP);
-    p.text(live ? 'connected' : s ? (s.phase === 'idle' ? 'not connected' : s.phase + '…') : 'no bridge', 8, 8);
-    if (s && s.asleep) { p.fill(90); p.text('asleep (zZz)', 8, 24); }
-
-    if (pulse > 1) {
-      p.fill(232, 102, 42, pulse);
-      p.textAlign(p.CENTER, p.TOP);
-      p.textSize(15);
-      p.text(pulseText, W / 2, 40);
-      pulse *= 0.96;
+    if (!live) {
+      p.noStroke();
+      p.fill(244, 241, 234, 170);
+      p.rect(0, 0, W, H);
     }
   };
 
-  function hitLed(mx, my) {
-    return LED_POS.findIndex(([x, y]) => p.dist(mx, my, x, y) < 18);
+  function hitLed(x, y) {
+    return LED_POS.findIndex(([lx, ly]) => p.dist(x, y, lx, ly) < 22);
   }
 
-  function hitEar(mx, my) {
+  // distance from the pointer to the ear's centre line
+  function hitEar(x, y) {
+    let best = -1, bestD = 26;
     for (let i = 0; i < 2; i++) {
-      const [x, y] = EAR_PIVOT[i];
-      if (p.dist(mx, my, x, y - 60) < 55) return i;
+      const [ax, ay] = EAR_PIVOT[i];
+      const [bx, by] = earTip(i, shown[i]);
+      const t = p.constrain(((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / (EAR_LEN * EAR_LEN), 0, 1);
+      const d = p.dist(x, y, ax + t * (bx - ax), ay + t * (by - ay));
+      if (d < bestD) { best = i; bestD = d; }
     }
-    return -1;
+    return best;
   }
 
-  // p5 already maps mouse coordinates through any CSS scaling of the canvas
-  const scaled = () => [p.mouseX, p.mouseY];
+  function earFromPointer(i, x, y) {
+    const [ax, ay] = EAR_PIVOT[i];
+    const outward = (i === 0 ? 1 : -1) * (x - ax);
+    let a = Math.atan2(outward, -(y - ay));     // 0 = up, PI/2 = outwards
+    if (a < 0) a = 0;                           // can't go past upright inwards
+    return Math.round(p.constrain((a / Math.PI) * 16, 0, 16));
+  }
+
+  const inCanvas = () => p.mouseX >= 0 && p.mouseY >= 0 && p.mouseX <= W && p.mouseY <= H;
 
   p.mousePressed = () => {
-    const [mx, my] = scaled();
-    if (mx < 0 || my < 0 || mx > W || my > H) return;
-    const led = hitLed(mx, my);
+    if (!inCanvas() || !rabbit.rabbitConnected) return;
+    const led = hitLed(p.mouseX, p.mouseY);
     if (led >= 0) {
-      Controls.setLedLocal(led, document.getElementById('led-brush').value);
-      Controls.sendLeds(false);
+      Controls.pickLedColor(led, leds[led]);
       return false;
     }
-    dragging = hitEar(mx, my);
+    dragging = hitEar(p.mouseX, p.mouseY);
     if (dragging >= 0) return false;
   };
 
   p.mouseDragged = () => {
     if (dragging < 0) return;
-    const [mx, my] = scaled();
-    const [x, y] = EAR_PIVOT[dragging];
-    let a = Math.atan2(mx - x, -(my - y)); // 0 = up
-    if (dragging === 1) a = -a;
-    const pos = Math.round(p.constrain((a / p.TWO_PI) * 2 * 17, 0, 16));
-    shown[dragging] = pos;
-    const l = dragging === 0 ? pos : -1;
-    const r = dragging === 1 ? pos : -1;
-    Controls.setEarSliders(l, r);
-    rabbit.ears(l, r, { throttle: true });
+    const pos = earFromPointer(dragging, p.mouseX, p.mouseY);
+    target[dragging] = pos;
+    if (dragging === 0) rabbit.ears(pos, null, { throttle: true });
+    else rabbit.ears(null, pos, { throttle: true });
     return false;
   };
 
   p.mouseReleased = () => {
-    if (dragging >= 0) {
-      const l = dragging === 0 ? Math.round(shown[0]) : -1;
-      const r = dragging === 1 ? Math.round(shown[1]) : -1;
-      rabbit.ears(l, r).catch(() => {});
-    }
+    if (dragging < 0) return;
+    const i = dragging;
     dragging = -1;
+    const pos = target[i];
+    localUntil = Date.now() + 2500;
+    (i === 0 ? rabbit.ears(pos, null) : rabbit.ears(null, pos)).catch(() => {});
+    return false;
   };
 }, document.getElementById('rabbit-view'));

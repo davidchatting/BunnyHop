@@ -4,152 +4,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nabaztag Bridge</title>
+  <title>Nabaztag</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header>
-    <h1>Nabaztag Bridge</h1>
-    <div class="badges">
-      <span id="badge-bridge" class="badge off" title="WebSocket to the ESP32">bridge</span>
-      <span id="badge-rabbit" class="badge off" title="Rabbit connection phase">rabbit: ?</span>
-      <span id="badge-clients" class="badge" title="Connected web clients">1 client</span>
-    </div>
+    <h1>Nabaztag</h1>
+    <span id="status" class="status off">connecting…</span>
   </header>
 
   <main>
-    <section id="stage">
-      <div class="card">
-        <div class="card-head"><h2>Rabbit</h2><span id="rabbit-id" class="muted"></span></div>
-        <div id="rabbit-view"></div>
-        <p class="hint">Click an LED to paint it with the selected colour. Drag an ear to move it.</p>
-      </div>
-
-      <div class="card" id="playground">
-        <div class="card-head">
-          <h2>Sketch</h2>
-          <div class="row">
-            <select id="pg-examples"></select>
-            <button id="pg-run" class="primary">Run</button>
-            <button id="pg-stop">Stop</button>
-          </div>
-        </div>
-        <div id="pg-canvas"></div>
-        <textarea id="pg-code" spellcheck="false"></textarea>
-        <pre id="pg-error" class="error" hidden></pre>
-        <details class="hint">
-          <summary>How sketches work</summary>
-          <p>Write ordinary global-mode p5.js (<code>setup</code>, <code>draw</code>,
-          <code>mousePressed</code>…). The rabbit is <code>rabbit</code>
-          (see <code>js/rabbit-api.js</code>). Define any of these to react to it:
-          <code>onButton(e)</code> (<code>e.clicks</code>), <code>onRfid(e)</code> (<code>e.tag</code>),
-          <code>onEars(e)</code> (<code>e.left</code>, <code>e.right</code>), <code>onRecording(e)</code> (<code>e.url</code>).
-          Outputs: <code>rabbit.ears(l, r)</code> 0–16, <code>rabbit.leds([5 colours])</code>,
-          <code>rabbit.led(i, colour)</code>, <code>rabbit.play(url)</code>, <code>rabbit.chor(steps)</code>.
-          Pass <code>{throttle:true}</code> when calling from <code>draw()</code>.</p>
-        </details>
+    <section class="card rabbit">
+      <div id="rabbit-view"></div>
+      <p class="hint">Tap a light to change its colour. Drag an ear to move it.</p>
+      <div class="row">
+        <button id="ears-up">Ears up</button>
+        <button id="lights-off">Lights off</button>
       </div>
     </section>
 
-    <section id="panels">
-      <div class="card">
-        <h2>Ears</h2>
-        <label>Left <input id="ear-left" type="range" min="0" max="16" value="0"><output id="ear-left-v">0</output></label>
-        <label>Right <input id="ear-right" type="range" min="0" max="16" value="0"><output id="ear-right-v">0</output></label>
-        <div class="row">
-          <button data-ears="0,0">Up</button>
-          <button data-ears="8,8">Down</button>
-          <button data-ears="4,12">Wonky</button>
-          <label class="inline"><input id="ear-live" type="checkbox" checked> live</label>
-        </div>
-        <p class="muted">Reported by rabbit: <span id="ear-reported">–</span></p>
-      </div>
-
-      <div class="card">
-        <h2>LEDs</h2>
-        <div id="led-pickers" class="led-grid"></div>
-        <div class="row">
-          <input id="led-brush" type="color" value="#ff6600" title="Brush colour for clicking LEDs">
-          <button id="led-all">All = brush</button>
-          <button id="led-off">All off</button>
-          <button id="led-send" class="primary">Send</button>
-        </div>
-        <div class="row">
-          <label>Nose blink
-            <select id="nose-mode"><option value="0">off</option><option value="1">blink</option><option value="2">double</option></select>
-          </label>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Audio</h2>
-        <div id="audio-list" class="list"></div>
-        <form id="audio-upload" class="row">
-          <input type="file" id="audio-file" accept=".mp3,.wav,audio/*">
-          <button type="submit">Upload</button>
-        </form>
-        <div class="row">
-          <input id="audio-url" type="text" placeholder="/audio/file.mp3 or http://192.168.4.1/...">
-          <button id="audio-play">Play URL</button>
-        </div>
-        <p class="muted">Last recording: <span id="rec-last">–</span></p>
-      </div>
-
-      <div class="card">
-        <h2>RFID</h2>
-        <div id="rfid-current" class="big">no tag yet</div>
-        <ul id="rfid-list" class="list"></ul>
-      </div>
-
-      <div class="card">
-        <h2>Commands</h2>
-        <div class="row">
-          <button data-cmd='{"cmd":"wake"}'>Wake</button>
-          <button data-cmd='{"cmd":"sleep"}'>Sleep</button>
-          <button data-cmd='{"cmd":"reboot"}'>Reboot rabbit</button>
-        </div>
-        <label>JSON command
-          <textarea id="cmd-json" rows="3">{"cmd":"ears","left":4,"right":12}</textarea>
-        </label>
-        <div class="row"><button id="cmd-send" class="primary">Send</button></div>
-        <label>Violet program
-          <textarea id="cmd-program" rows="3" placeholder="MU http://192.168.4.1/audio/x.mp3&#10;MW"></textarea>
-        </label>
-        <div class="row"><button id="program-send">Send program</button></div>
-        <label>Raw packet (hex)
-          <input id="cmd-raw" type="text" placeholder="7f 04 00 00 08 7f ff ff fe 04 00 05 00 ff">
-        </label>
-        <div class="row"><button id="raw-send">Send raw</button></div>
-        <pre id="cmd-reply" class="mono"></pre>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2>Event log</h2>
-          <div class="row">
-            <label class="inline"><input id="log-verbose" type="checkbox"> protocol detail</label>
-            <button id="log-clear">Clear</button>
-          </div>
-        </div>
-        <div id="log" class="log mono"></div>
-      </div>
-
-      <div class="card">
-        <h2>Setup &amp; diagnostics</h2>
-        <dl id="diag" class="kv"></dl>
-        <div class="row">
-          <button id="wifi-pair">Find &amp; pair rabbit</button>
-          <button id="wifi-refresh">Refresh</button>
-        </div>
-      </div>
+    <section class="card">
+      <h2>Sounds</h2>
+      <div id="sounds" class="sounds"></div>
+      <label class="upload">
+        <input type="file" id="sound-file" accept=".mp3,.wav,audio/mpeg,audio/wav">
+        <span>Add a sound…</span>
+      </label>
     </section>
+
+    <section class="card">
+      <h2>Activity</h2>
+      <ul id="activity" class="activity">
+        <li class="empty">Press the rabbit's button, show it a tag, or move its ears.</li>
+      </ul>
+    </section>
+
+    <details class="card">
+      <summary>Connection</summary>
+      <dl id="info" class="info"></dl>
+      <button id="pair">Pair a rabbit</button>
+      <p class="hint">To pair, hold the rabbit's head button while plugging it in, until its lights are blue.</p>
+    </details>
   </main>
+
+  <input type="color" id="led-picker" class="picker">
 
   <script src="lib/p5.min.js"></script>
   <script src="js/rabbit-api.js"></script>
   <script src="js/events.js"></script>
   <script src="js/controls.js"></script>
-  <script src="js/playground.js"></script>
   <script src="js/sketch.js"></script>
 </body>
 </html>

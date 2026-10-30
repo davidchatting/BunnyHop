@@ -192,7 +192,8 @@
   }
 
   function clampEar(v) {
-    if (v === null || v === undefined || Number.isNaN(+v)) return -1;
+    // null/undefined/negative = leave this ear where it is
+    if (v === null || v === undefined || Number.isNaN(+v) || +v < 0) return -1;
     return Math.max(0, Math.min(EAR_MAX, Math.round(+v)));
   }
 

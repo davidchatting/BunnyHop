@@ -231,3 +231,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 15.
 
 > can tyou test the webinteface?
+
+## 16.
+
+> the web inteface is much too much, sketch interface is unnecesary, commands makes no sense and the interactive rabbit doesn't seem to work

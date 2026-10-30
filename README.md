@@ -4,8 +4,8 @@ An ESP32 that brings a **Nabaztag:tag** (the 2006 Violet rabbit, "V2") back to
 life with no internet and no cloud servers. The ESP32 provisions the rabbit
 over its own setup network, runs a Wi-Fi access point that the rabbit and any
 number of phones/laptops join, speaks the rabbit's original protocol, and
-serves a p5.js creative-coding web app where rabbit inputs drive sketches and
-sketches drive the rabbit.
+serves a simple web app - a live drawing of the rabbit that is also its remote
+control - plus a JavaScript API for your own projects.
 
 **The rabbit's firmware is never modified or flashed.** The rabbit downloads its
 program ("bootcode") over the network on every boot; the bridge serves Violet's
@@ -90,39 +90,18 @@ rabbit in setup mode every minute; "Find & pair rabbit" in the web app or
 
 ### Web app
 
-`http://192.168.4.1/` (works on phones, tablets and computers, several at once):
+`http://192.168.4.1/` works on phones, tablets and computers, several at once:
 
-- **Rabbit** - live drawing: connection state, ear positions, LED colours. Click
-  an LED to paint it, drag an ear to move it.
-- **Sketch** - a live-coding p5.js editor wired to the rabbit (see below).
-- **Ears, LEDs, Audio** - direct controls; upload MP3s to the bridge and play
-  them on the rabbit or in the browser.
-- **RFID** - live tag reads with counts.
-- **Commands** - wake/sleep/reboot, any JSON command, raw Violet programs, raw packets.
-- **Event log** - everything the bridge does; tick "protocol detail" for XMPP traffic.
-- **Setup & diagnostics** - AP, rabbit identity, connection phase, pairing.
+- **The rabbit** - a live drawing that is also the control: tap a light to
+  pick its colour, drag an ear to move it. It follows the real rabbit (ears
+  moved by hand, changes made from other devices).
+- **Sounds** - tap to play on the rabbit; "Add a sound…" uploads an MP3.
+- **Activity** - button presses, RFID tags, ears moved by hand, and recorded
+  messages (long-press the rabbit's button) with a play button.
+- **Connection** - Wi-Fi name, rabbit identity, and pairing a new rabbit.
 
-### Sketches
-
-Write ordinary global-mode p5.js. The rabbit is `rabbit`; define handlers to react:
-
-```js
-function setup() { createCanvas(400, 200); }
-
-function onButton(e) {            // e.clicks: 1 or 2
-  rabbit.leds(['#000', '#f00', '#0f0', '#00f', '#fff']);
-}
-function onRfid(e)  { print(e.tag); }
-function onEars(e)  { print(e.left, e.right); }   // ears moved by hand
-function onRecording(e) { new Audio(e.url).play(); }
-
-function draw() {
-  background(240);
-  if (mouseIsPressed) rabbit.ears(map(mouseX, 0, width, 0, 16), 8, { throttle: true });
-}
-```
-
-Five examples are built in (Examples… menu). `Ctrl/⌘-Enter` runs.
+For anything more (choreographies, raw programs, debugging) use the API from
+your own code ([docs/API.md](docs/API.md), `rabbit-api.js`) or the serial console.
 
 ### Without joining the bridge's Wi-Fi
 
@@ -132,15 +111,17 @@ without Wi-Fi. Everything except audio upload and recordings works; the
 commands run on the real firmware and rabbit. (`tools/mock_bridge.py` serves
 the app against a simulated rabbit instead.)
 
-### Rabbit API for other projects
+### Rabbit API for your own projects
 
-`firmware/data/www/js/rabbit-api.js` is standalone (no p5.js). Copy it into any
-page served from - or able to reach - the bridge:
+`firmware/data/www/js/rabbit-api.js` is standalone (no p5.js) and works from
+any page served by - or able to reach - the bridge, including p5.js sketches:
 
 ```js
 const rabbit = new RabbitClient();                 // ws://192.168.4.1/ws
 rabbit.on('button', e => rabbit.play('/audio/hello.mp3'));
-await rabbit.ears(0, 16);
+rabbit.on('rfid', e => console.log(e.tag));
+await rabbit.ears(0, 16);                          // rabbit's left, right
+await rabbit.leds(['#000', '#f00', '#0f0', '#00f', '#fff']);
 ```
 
 The underlying WebSocket/REST protocol is documented in [docs/API.md](docs/API.md).
@@ -176,7 +157,7 @@ reconnect).
 | `firmware/src/net_services.*` | DNS catch-all, NTP responder (time comes from browsers) |
 | `firmware/src/adpcm.*` | Microphone recordings: IMA ADPCM → PCM WAV |
 | `firmware/data/vl/bootcode.bin` | Violet's original bootcode (unmodified) |
-| `firmware/data/www/` | Web app: `index.html`, `css/style.css`, `js/sketch.js` (main), `js/rabbit-api.js`, `js/controls.js`, `js/events.js`, `js/playground.js`, `lib/p5.min.js.gz` |
+| `firmware/data/www/` | Web app: `index.html`, `css/style.css`, `js/sketch.js` (main + p5.js rabbit drawing), `js/rabbit-api.js` (standalone client), `js/controls.js`, `js/events.js`, `lib/p5.min.js.gz` |
 | `tools/` | Serial console client, serial↔WebSocket relay (`serial_bridge.py`), mock bridge for UI work without hardware, camera snapshot |
 | `research/` | Reference sources used to establish the protocol |
 
@@ -209,9 +190,8 @@ Rabbit-side protocol details, including the problems found and fixed, are in
   a breathing base LED and info-service animations).
 - **LED update rate:** the rabbit blanks its LEDs for ~0.7 s while it downloads
   each new choreography, so the bridge shows each LED update for at least
-  1.5 s and keeps only the latest pending one. For smooth animation, send a
-  multi-step choreography (see the "Rainbow LEDs" example) rather than
-  streaming colours.
+  1.5 s and keeps only the latest pending one. For smooth animation, send one
+  multi-step choreography (`rabbit.chor(...)`) rather than streaming colours.
 - **Latency:** ears start moving within ~1 s; LEDs/choreographies ~0.9 s; audio ~2-3 s (the rabbit
   downloads the whole resource before playing).
 - **No volume control** (hardware wheel only); **MP3/WAV only from the bridge**
