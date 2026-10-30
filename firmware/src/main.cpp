@@ -52,6 +52,7 @@ static void serialCommand(String line) {
     else if (cmd == "probe") wifimgr::probe();
     else if (cmd == "pair") wifimgr::requestPair();
     else if (cmd == "forget") wifimgr::forget();
+    else if (cmd == "diag") runJson("{\"cmd\":\"diag\",\"node\":\"" + (rest.length() ? rest : String("getrunningstate")) + "\"}");
     else if (cmd == "kick") wifimgr::kickRabbit((rest.toInt() > 0 ? rest.toInt() : 30) * 1000UL);
     else if (cmd == "restart") ESP.restart();
     else if (cmd == "ears") {
@@ -89,7 +90,6 @@ void setup() {
 
     rabbit_http::begin(server);
     api::begin(server);
-    server.serveStatic("/audio/", LittleFS, "/audio/");
     server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html").setCacheControl("max-age=60");
     server.onNotFound([](AsyncWebServerRequest *r) {
         if (rabbit_http::isRabbitPath(r->url())) {

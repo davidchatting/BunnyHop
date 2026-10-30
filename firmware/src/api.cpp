@@ -122,6 +122,14 @@ void execute(JsonObjectConst cmd, JsonObject reply) {
         packets::Bytes b;
         if (!packets::fromHex(cmd["hex"] | "", b) || b.size() < 2) err = "hex trame required (7f ... ff)";
         else ok = rabbit::rawTrame(b, &err);
+    } else if (c == "xmpp") {
+        String xml = cmd["xml"] | "";
+        if (xml.isEmpty()) err = "xml required";
+        else if (!(ok = xmpp::sendRaw(xml))) err = "rabbit not connected";
+    } else if (c == "diag") {
+        // asks the bootcode for its internal state; reply arrives as a "diagnostics" event
+        String node = cmd["node"] | "getrunningstate";
+        if (!(ok = xmpp::queryRabbit(node.c_str()))) err = "rabbit not connected";
     } else if (c == "time") {
         net_services::setTime(cmd["epochMs"].as<uint64_t>());
         ok = true;

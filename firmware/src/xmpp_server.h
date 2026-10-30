@@ -15,5 +15,8 @@ bool connected();     // a rabbit has authenticated and bound a resource
 String resource();    // current resource ("boot", "idle", "asleep", "streaming"...)
 bool sendPacket(const packets::Bytes &trame);
 void disconnect();
+bool sendRaw(const String &xml);            // debugging: any stanza to the rabbit
+bool queryRabbit(const char *node);         // ad-hoc command: "getrunningstate" | "getconfig"
+
 
 }  // namespace xmpp

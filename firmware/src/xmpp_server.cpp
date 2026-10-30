@@ -330,6 +330,21 @@ static void handleStanza(const String &d) {
             LOGI("xmpp", "unbind '%s'%s", r.c_str(), r == "boot" ? " - boot finished" : "");
         } else if (iq.content.indexOf("jabber:iq:version") >= 0) {
             LOGI("xmpp", "version: %s", iq.content.c_str());
+        } else if (iq.content.indexOf("http://jabber.org/protocol/commands") >= 0) {
+            // reply to queryRabbit(): <field var='k'><value>v</value></field>...
+            String node = between(iq.content, "node='", "'");
+            rabbit::emit("diagnostics", [&](JsonObject o) {
+                o["node"] = node;
+                JsonObject f = o["fields"].to<JsonObject>();
+                int i = 0;
+                while ((i = iq.content.indexOf("<field var='", i)) >= 0) {
+                    String k = between(iq.content, "<field var='", "'", i);
+                    String v = between(iq.content, "<value>", "</value>", i);
+                    f[k] = v;
+                    LOGI("diag", "%s = %s", k.c_str(), v.c_str());
+                    i += 12;
+                }
+            });
         } else if (iq.type == "result" || iq.type == "error") {
             // replies to our own requests - nothing to do
         } else {
@@ -515,6 +530,18 @@ bool sendPacket(const packets::Bytes &t) {
                  packets::base64(t) + "</packet></message>";
     write(msg);
     return true;
+}
+
+bool sendRaw(const String &xml) {
+    if (!connected()) return false;
+    write(xml);
+    return true;
+}
+
+bool queryRabbit(const char *node) {
+    return sendRaw("<iq from='net.openjabnab.platform@" XMPP_DOMAIN "/services' to='" + user + "@" XMPP_DOMAIN "/" + res +
+                   "' type='set' id='diag-" + String(msgNb++) + "'><command xmlns='http://jabber.org/protocol/commands' node='" +
+                   node + "' action='execute'/></iq>");
 }
 
 void disconnect() {

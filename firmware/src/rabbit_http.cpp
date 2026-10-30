@@ -32,6 +32,17 @@ static void logReq(AsyncWebServerRequest *r) {
     rabbit::touch(r->client()->remoteIP().toString());
 }
 
+// Resources the bootcode downloads before running a program (MU/CH). Its
+// HTTP client only treats a download as complete when the connection
+// closes, so log timing to diagnose stalls.
+static void resourceTiming(AsyncWebServerRequest *r) {
+    uint32_t t0 = millis();
+    String url = r->url();
+    LOGI("http", "rabbit fetch %s (HTTP/1.%d, Connection: %s)", url.c_str(), r->version(),
+         r->hasHeader("Connection") ? r->header("Connection").c_str() : "-");
+    r->onDisconnect([t0, url]() { LOGI("http", "%s connection closed after %lums", url.c_str(), (unsigned long)(millis() - t0)); });
+}
+
 static void bootcode(AsyncWebServerRequest *r) {
     logReq(r);
     auto &s = rabbit::state();
@@ -96,6 +107,7 @@ static void recordDone(AsyncWebServerRequest *r) {
 
 static void chorFile(AsyncWebServerRequest *r) {
     logReq(r);
+    resourceTiming(r);
     String name = r->url().substring(strlen("/vl/chor/"));
     uint32_t id = name.toInt();
     packets::Bytes b;
@@ -120,7 +132,19 @@ static void otherRabbit(AsyncWebServerRequest *r) {
     r->send(200, "application/octet-stream", "");
 }
 
+static void audioFile(AsyncWebServerRequest *r) {
+    String path = r->url();
+    if (path.indexOf("..") >= 0 || !LittleFS.exists(path)) {
+        r->send(404);
+        return;
+    }
+    resourceTiming(r);
+    String type = path.endsWith(".mp3") ? "audio/mpeg" : path.endsWith(".wav") ? "audio/wav" : "application/octet-stream";
+    r->send(LittleFS, path, type);
+}
+
 void begin(AsyncWebServer &server) {
+    server.on("/audio/*", HTTP_GET, audioFile);
     server.on("/vl/bc.jsp", HTTP_GET, bootcode);
     server.on("/bc.jsp", HTTP_GET, bootcode);
     server.on("/vl/locate.jsp", HTTP_GET, locate);
