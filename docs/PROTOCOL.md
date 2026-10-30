@@ -187,7 +187,9 @@ linger is tunable live: `{"cmd":"tune","linger":ms}`.
 On a tag read the bootcode requests
 `GET <ping server>/vl/rfid.jsp?sn=<mac>&v=<rev>&h=4&t=<tag hex>` and evaluates
 the response as a packet. The bridge answers with an empty body and emits an
-`rfid` event. Not yet tested with a physical tag.
+`rfid` event. Not yet tested: the reader (ST CRX14, to our knowledge) only
+reads ISO 14443-B ST tags (SRI512/SRIX4K - Violet's Ztamps/Nano:ztags); a
+non-compatible tag produced no request at all.
 
 ## 10. Microphone [T]
 

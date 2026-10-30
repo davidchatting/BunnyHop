@@ -205,3 +205,13 @@ Clarifying answers are included where they changed the direction of the work.
 ## 9.
 
 > moved left ear
+
+## 10.
+
+> moved right ear
+
+## 11.
+
+> look for rfid now
+
+> i don't think I have the right type

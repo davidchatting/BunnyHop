@@ -42,7 +42,7 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 | Microphone: long-press recording | **Physically tested** | 2.6 s IMA ADPCM recording received, decoded |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
-| RFID tag reads | Protocol-verified | Bootcode calls `/vl/rfid.jsp?t=…`; **no tag tested yet** |
+| RFID tag reads | Protocol-verified | Bootcode calls `/vl/rfid.jsp?t=…`; **untested - no compatible tag available** (see below) |
 | Nose blink / weather etc. ambient services | Protocol-verified | OpenJabNab service ids |
 | Bootcode state queries (`getrunningstate`) | **Not working** | Rabbit doesn't answer our IQs |
 | Volume control | **Not available** | Volume comes only from the wheel on the rabbit |
@@ -204,7 +204,10 @@ Rabbit-side protocol details, including the problems found and fixed, are in
 - **No volume control** (hardware wheel only); **MP3/WAV only from the bridge**
   (the rabbit can't reach the internet).
 - **Open Wi-Fi network**: anyone in range can join and control the rabbit.
-- **RFID not yet tested with a physical tag.**
+- **RFID not yet tested with a physical tag.** The reader (ST CRX14, to our
+  knowledge) only sees ISO 14443-B ST tags (SRI512/SRIX4K family - Violet's
+  Ztamps and Nano:ztags). Common MIFARE/NTAG (14443-A) cards and stickers are
+  ignored; a tag tried during development produced no request at all.
 - **The rabbit ignores XMPP IQs** from the bridge, so its internal state
   (`getrunningstate`) can't be read; diagnosis relies on its observable behaviour.
 - Single rabbit per bridge.
@@ -212,7 +215,7 @@ Rabbit-side protocol details, including the problems found and fixed, are in
 
 ## Future development
 
-- Test RFID with real tags.
+- Test RFID with an ISO 14443-B ST tag (e.g. a Ztamp, or an SRIX4K card).
 - Optional WPA (the setup page offers WPA; unknown which ciphers the rabbit supports).
 - Text-to-speech on the bridge (e.g. a tiny formant synthesiser) - the rabbit plays any MP3/WAV the bridge serves.
 - Streaming audio (`ST` programs) from a browser's microphone through the bridge.
