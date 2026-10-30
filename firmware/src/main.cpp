@@ -104,7 +104,7 @@ void setup() {
     Serial.begin(115200);
     delay(200);
     eventlog::begin();
-    LOGI("boot", "nabaztag-bridge starting");
+    LOGI("boot", "BunnyHop starting");
     if (!LittleFS.begin(true)) LOGI("boot", "LittleFS mount failed");
     store::begin();
 

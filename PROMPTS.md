@@ -160,7 +160,7 @@ Clarifying answers are included where they changed the direction of the work.
 
 **Clarifications (Claude's questions, the user's answers):**
 - Brief says V1, but RFID/microphone are V2 features and the rabbit was earlier identified as V2 - which? -> "it's a nabaztagtag" (Nabaztag:tag, V2)
-- New repo, or continue the earlier BunnyHop experiment? -> "New repo from scratch"
+- New repo, or continue the earlier BunnyHop experiment? -> "New repo from scratch" (that earlier experiment is now BunnyHop-old; this project later took the BunnyHop name)
 
 ## 2.
 
@@ -235,3 +235,9 @@ Clarifying answers are included where they changed the direction of the work.
 ## 16.
 
 > the web inteface is much too much, sketch interface is unnecesary, commands makes no sense and the interactive rabbit doesn't seem to work
+
+## 17.
+
+> this project and repo should now be called BunnyHop update everytthing
+
+(Renamed from nabaztag-bridge. The earlier, unrelated BunnyHop experiment had already been renamed BunnyHop-old.)

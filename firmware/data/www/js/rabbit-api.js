@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * rabbit-api.js - client for the nabaztag-bridge WebSocket API.
+ * rabbit-api.js - client for the BunnyHop WebSocket API.
  *
  * Standalone: no dependency on p5.js or the rest of the web app, so it can
  * be reused by other pages and projects (copy this one file).

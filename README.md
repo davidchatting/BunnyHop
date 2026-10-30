@@ -1,4 +1,4 @@
-# nabaztag-bridge
+# BunnyHop
 
 An ESP32 that brings a **Nabaztag:tag** (the 2006 Violet rabbit, "V2") back to
 life with no internet and no cloud servers. The ESP32 provisions the rabbit
@@ -68,7 +68,7 @@ pio run -t uploadfs      # web app, bootcode, sample audio (LittleFS)
 
 ## First-time setup
 
-1. Power the ESP32. It starts an AP called `NabaztagBridge` and scans for a
+1. Power the ESP32. It starts an AP called `BunnyHop` and scans for a
    rabbit in setup mode.
 2. Put the rabbit into setup mode: unplug it, hold the button on its head while
    plugging it back in, release when **all LEDs are blue**.
@@ -233,9 +233,9 @@ This project stands on years of community reverse-engineering:
   (no licence stated). Used as a reference for the bootcode's internals (same
   bytecode revision, 21029); no code copied, and its replacement firmware is
   *not* used.
-- **BunnyHop** and **nabaztag-controller** - earlier local experiments with this
-  same rabbit; their notes on 802.11b-only radios and the boot sequence saved
-  a lot of time (one of BunnyHop's conclusions - a `b=` port field - turned out
+- **BunnyHop-old** (an earlier experiment that first used the BunnyHop name) and
+  **nabaztag-controller** - earlier local experiments with this same rabbit; their notes on 802.11b-only radios and the boot sequence saved
+  a lot of time (one of BunnyHop-old's conclusions - a `b=` port field - turned out
   to be wrong).
 - **p5.js** 1.11.3 - https://p5js.org (LGPL-2.1), served from the bridge.
 - **ESPAsyncWebServer** and **AsyncTCP** (ESP32Async) - https://github.com/ESP32Async (LGPL-3.0).
@@ -245,7 +245,7 @@ This project stands on years of community reverse-engineering:
 
 ## Licence
 
-Copyright (C) 2026 the nabaztag-bridge contributors.
+Copyright (C) 2026 the BunnyHop contributors.
 
 This project is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
