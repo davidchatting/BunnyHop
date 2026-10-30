@@ -41,7 +41,7 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 | Button: single and double click | **Physically tested** | Events received while pressing |
 | Microphone: long-press recording | **Physically tested** | 2.6 s IMA ADPCM recording received, decoded |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
-| Ears moved by hand → event | Protocol-verified | Bootcode sends `<ears>`; side mapping inferred |
+| Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
 | RFID tag reads | Protocol-verified | Bootcode calls `/vl/rfid.jsp?t=…`; **no tag tested yet** |
 | Nose blink / weather etc. ambient services | Protocol-verified | OpenJabNab service ids |
 | Bootcode state queries (`getrunningstate`) | **Not working** | Rabbit doesn't answer our IQs |
@@ -207,14 +207,12 @@ Rabbit-side protocol details, including the problems found and fixed, are in
 - **RFID not yet tested with a physical tag.**
 - **The rabbit ignores XMPP IQs** from the bridge, so its internal state
   (`getrunningstate`) can't be read; diagnosis relies on its observable behaviour.
-- **Ears moved by hand**: the left/right mapping of reported positions is
-  inferred from the command mapping, not yet confirmed.
 - Single rabbit per bridge.
 - Large recordings are kept on flash (4 rotating slots, ~2 MB filesystem).
 
 ## Future development
 
-- Test RFID with real tags; confirm hand-moved ear reporting.
+- Test RFID with real tags.
 - Optional WPA (the setup page offers WPA; unknown which ciphers the rabbit supports).
 - Text-to-speech on the bridge (e.g. a tiny formant synthesiser) - the rabbit plays any MP3/WAV the bridge serves.
 - Streaming audio (`ST` programs) from a browser's microphone through the bridge.

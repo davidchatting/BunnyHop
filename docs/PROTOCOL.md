@@ -88,7 +88,7 @@ Mirrors OpenJabNab's `XmppHandler` and auth plugin:
 | `<button><clic>1</clic></button>` | single click [T] |
 | `<button><clic>2</clic></button>` | double click [T] |
 | `<button><clic>1</clic><event>N</event></button>` | click that interrupted program ID N [T] |
-| `<ears><left>L</left><right>R</right></ears>` | ears moved by hand [P] |
+| `<ears><left>L</left><right>R</right></ears>` | ears moved by hand; `left` is the rabbit's **right** ear [T] |
 
 **Commands to the rabbit**: `<message to='<mac>@domain/<resource>'><packet
 xmlns='violet:packet' format='1.0' ttl='604800'>BASE64</packet></message>`.
@@ -126,7 +126,8 @@ LED, 14 tai chi, 0 = disable a service.
 **Ear sides [T]:** with an unmirrored camera, service 4 (Violet's "left ear")
 moves the rabbit's **right** ear and service 5 its left. Choreography motor 0
 is likewise the rabbit's right ear. The bridge API is rabbit-centric and swaps
-these internally; reported `<ears>` are swapped the same way [I].
+these internally; reported `<ears>` are swapped the same way [T: rabbit's left
+ear moved by hand arrived as `<right>11</right>`].
 
 Program obfuscation (OpenJabNab "Sache"): `out[0]=0`, then
 `out[i] = INV[prev % 128] * c + 47 (mod 256)`, `prev` starting at 35, where INV

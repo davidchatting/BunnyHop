@@ -371,8 +371,7 @@ static void handleStanza(const String &d) {
             String ev = between(d, "<event>", "</event>");
             rabbit::onButton(clicks, ev.length() ? ev.toInt() : -1);
         } else if (d.indexOf("<ears") >= 0) {
-            // Violet's <left> is assumed to be the rabbit's right ear, as for
-            // commands (inferred - see docs/PROTOCOL.md)
+            // Violet's <left> is the rabbit's right ear (camera-verified)
             rabbit::onEars(between(d, "<right>", "</right>").toInt(), between(d, "<left>", "</left>").toInt());
         } else {
             LOGI("xmpp", "unhandled message: %s", d.c_str());

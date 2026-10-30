@@ -197,3 +197,11 @@ Clarifying answers are included where they changed the direction of the work.
 > do you have a real-time serial interafce to send messages without recompiling the esp32 code?
 
 (Yes - every API command can be sent as JSON over the USB serial console; see README "Serial console".)
+
+## 8.
+
+> the camera isn't mirrored, pressing the button now
+
+## 9.
+
+> moved left ear
