@@ -26,4 +26,11 @@ void forget();
 void kickRabbit(uint32_t offMs);  // drop the AP so a rabbit with a stale session reboots
 void statusJson(JsonObject o);
 
+// Home Wi-Fi ("public side"). Empty ssid = forget.
+void setLan(const String &ssid, const String &pass);
+void requestLanScan();  // result arrives as a "lanScan" event
+bool lanConnected();
+// True if a request arrived over the rabbit's network (vs home Wi-Fi)
+bool fromRabbitNetwork(IPAddress localIp);
+
 }  // namespace wifimgr

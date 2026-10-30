@@ -57,3 +57,10 @@
 // it. The rabbit blanks the LEDs for ~0.7 s while it downloads each new chor,
 // so faster updates would show mostly dark LEDs.
 #define CHOR_SETTLE_MS 1500
+
+// Home Wi-Fi ("public side"): the web app is also served there, as
+// http://bunnyhop.local/. While it's connected the rabbit's network only
+// accepts the rabbit; otherwise that network is open with a captive portal.
+#define MDNS_NAME "bunnyhop"
+#define LAN_CONNECT_TIMEOUT_MS (15UL * 1000UL)
+#define LAN_RETRY_MS (60UL * 1000UL)

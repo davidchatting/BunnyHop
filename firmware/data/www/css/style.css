@@ -91,3 +91,10 @@ details summary { cursor: pointer; color: var(--muted); font-size: 13px; text-tr
 
 /* native colour picker, opened when an LED on the drawing is tapped */
 .picker { position: fixed; left: 50%; top: 40%; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; }
+
+h3 { font-size: 14px; margin: 16px 0 6px; }
+.lan label { display: block; font-size: 14px; margin: 8px 0; color: var(--muted); }
+.lan input { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+.row-inline { display: flex; gap: 6px; }
+.row-inline input { flex: 1; }
+.lan .row { justify-content: flex-start; }

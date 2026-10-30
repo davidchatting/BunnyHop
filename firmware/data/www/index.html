@@ -39,9 +39,33 @@
       </ul>
     </section>
 
-    <details class="card">
+    <details class="card" id="connection">
       <summary>Connection</summary>
       <dl id="info" class="info"></dl>
+
+      <h3>Home Wi-Fi</h3>
+      <p id="lan-status" class="hint"></p>
+      <form id="lan-form" class="lan">
+        <label>Network
+          <span class="row-inline">
+            <input id="lan-ssid" list="lan-networks" autocomplete="off" placeholder="Wi-Fi name">
+            <button type="button" id="lan-scan">Scan</button>
+          </span>
+          <datalist id="lan-networks"></datalist>
+        </label>
+        <label>Password
+          <input id="lan-pass" type="password" autocomplete="off" placeholder="leave empty for an open network">
+        </label>
+        <div class="row">
+          <button type="submit">Save &amp; connect</button>
+          <button type="button" id="lan-forget">Forget</button>
+        </div>
+      </form>
+      <p class="hint">On your home Wi-Fi, BunnyHop is at <b>http://bunnyhop.local/</b>, and the rabbit's
+      own network becomes hidden and private to the rabbit. Without home Wi-Fi, join the
+      rabbit's network instead and this page opens by itself.</p>
+
+      <h3>Rabbit</h3>
       <button id="pair">Pair a rabbit</button>
       <p class="hint">To pair, hold the rabbit's head button while plugging it in, until its lights are blue.</p>
     </details>

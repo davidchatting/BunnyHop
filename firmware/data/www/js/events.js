@@ -46,9 +46,8 @@ const Events = (() => {
     const s = rabbit.state || {};
     const w = rabbit.wifi || {};
     const rows = {
-      'Wi-Fi network': w.ap,
+      "Rabbit's network": w.ap ? w.ap + (w.private ? ' (hidden, rabbit only)' : ' (open)') : '',
       'Rabbit': s.sn ? s.sn.replace(/(..)(?!$)/g, '$1:') : '',
-      'Rabbit address': s.ip,
       'State': s.connected ? 'connected' : s.phase,
     };
     const dl = $('info');
@@ -60,6 +59,21 @@ const Events = (() => {
       dd.textContent = v || '–';
       dl.append(dt, dd);
     }
+    const lan = w.lan || {};
+    const text = {
+      unset: 'Not set up.',
+      connecting: 'Connecting to ' + lan.ssid + '…',
+      connected: 'Connected to ' + lan.ssid + ' (' + lan.ip + ') - http://' + lan.host + '/',
+      unavailable: "Can't reach " + lan.ssid + ' - retrying every minute.',
+    }[lan.state] || '';
+    $('lan-status').textContent = text;
+    if (lan.ssid && document.activeElement !== $('lan-ssid') && !$('lan-ssid').value) $('lan-ssid').value = lan.ssid;
+  }
+
+  // the bridge's Wi-Fi status isn't in the periodic state push; poll it
+  function refreshWifi() {
+    if (!rabbit.connected) return;
+    rabbit.getWifi().then((w) => { rabbit.wifi = w; info(); status(); }).catch(() => {});
   }
 
   function init(r) {
@@ -71,8 +85,13 @@ const Events = (() => {
     rabbit.on('recording', (m) => add('Recorded a message', m.url));
     rabbit.on('connection', (m) => add(m.connected ? 'Rabbit connected' : 'Rabbit disconnected'));
     rabbit.on('pairing', (m) => add(m.step === 'done' ? 'Rabbit paired' : 'Pairing with ' + (m.ssid || 'rabbit') + '…'));
+    rabbit.on('lan', (m) => {
+      add(m.state === 'connected' ? 'Joined home Wi-Fi (' + m.ip + ')' : "Home Wi-Fi isn't reachable");
+      refreshWifi();
+    });
+    setInterval(refreshWifi, 5000);
     status();
   }
 
-  return { init, add };
+  return { init, add, refreshWifi };
 })();

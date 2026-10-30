@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "wifi_manager.h"
+#include <ESPmDNS.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <map>
@@ -23,19 +24,60 @@ static String setupFields;
 // stale-session watchdog (see kickRabbit)
 static volatile bool rabbitAssociated = false;
 static volatile uint32_t rabbitAssociatedAt = 0;
-static uint32_t lastKick = 0;  // "name=value&..." as scraped from the setup form
+static uint32_t lastKick = 0;
 
-static void startAp(const String &ssid) {
+// ---- home network (STA) and rabbit-only lock ----
+static String lanSsid, lanPass;
+static volatile bool lanUp = false;
+static bool lanAttempting = false;
+static uint32_t lanAttemptAt = 0;
+static bool lanRequested = false;  // (re)connect asked for from another task
+static bool inSetup = false;       // STA is busy with the rabbit's setup network
+static String lanIp;
+static String lanState = "unset";  // unset | connecting | connected | unavailable
+static volatile bool apLocked = false;
+static uint8_t rabbitMac[6];
+static bool haveRabbitMac = false;
+static bool scanRequested = false;
+static bool mdnsStarted = false;
+
+static bool parseMac(const String &s, uint8_t out[6]) {
+    return sscanf(s.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &out[0], &out[1], &out[2], &out[3], &out[4], &out[5]) == 6;
+}
+
+// The rabbit's MAC: its setup AP's BSSID is the same address (verified).
+static bool isRabbitMac(const uint8_t *m) {
+    if (haveRabbitMac) return memcmp(m, rabbitMac, 6) == 0;
+    return m[0] == 0x00 && m[1] == 0x13 && m[2] == 0xd3;  // not paired yet: any Violet rabbit
+}
+
+static void deauthOthers() {
+    wifi_sta_list_t list;
+    if (esp_wifi_ap_get_sta_list(&list) != ESP_OK) return;
+    for (int i = 0; i < list.num; i++) {
+        const uint8_t *m = list.sta[i].mac;
+        if (isRabbitMac(m)) continue;
+        uint16_t aid;
+        if (esp_wifi_ap_get_sta_aid(m, &aid) == ESP_OK) esp_wifi_deauth_sta(aid);
+    }
+}
+
+static bool apHidden = false;
+
+// hidden: don't broadcast the SSID (private mode, while home Wi-Fi is up)
+static void startAp(const String &ssid, bool hidden = apHidden) {
     ap = ssid;
+    apHidden = hidden;
     IPAddress ip(AP_IP_A, AP_IP_B, AP_IP_C, AP_IP_D);
     WiFi.softAPConfig(ip, ip, IPAddress(255, 255, 255, 0));
-    // Must be an open network for the rabbit. See README "Security".
-    WiFi.softAP(ap.c_str(), nullptr, AP_CHANNEL, 0, AP_MAX_CLIENTS);
+    // Always open (no password) - the rabbit needs that. Private = hidden +
+    // locked to the rabbit's MAC; see lanLoop().
+    WiFi.softAP(ap.c_str(), nullptr, AP_CHANNEL, hidden ? 1 : 0, AP_MAX_CLIENTS);
     // The rabbit's radio only decodes 802.11b (DSSS/CCK). With g/n enabled
     // the ESP32 sends it OFDM frames it can't receive, so the AP is b-only.
     esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B);
     esp_wifi_set_event_mask(WIFI_EVENT_MASK_NONE);  // enables AP probe-request events
-    LOGI("wifi", "AP '%s' up at %s (channel %d)", ap.c_str(), WiFi.softAPIP().toString().c_str(), AP_CHANNEL);
+    LOGI("wifi", "AP '%s' up at %s%s", ap.c_str(), WiFi.softAPIP().toString().c_str(), hidden ? " (hidden)" : "");
 }
 
 static String ssidFromBssid(const String &bssid) {
@@ -53,10 +95,15 @@ static void onWifiEvent(arduino_event_id_t ev, arduino_event_info_t info) {
         case ARDUINO_EVENT_WIFI_AP_STACONNECTED: {
             const uint8_t *m = info.wifi_ap_staconnected.mac;
             snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
-            bool isRabbit = m[0] == 0x00 && m[1] == 0x13 && m[2] == 0xd3;
+            bool isRabbit = isRabbitMac(m);
             if (isRabbit) {
                 rabbitAssociated = true;
                 rabbitAssociatedAt = millis();
+            } else if (apLocked) {
+                // home Wi-Fi is up: the rabbit's network is private to the rabbit
+                LOGI("wifi", "station %s refused (network is locked to the rabbit)", mac);
+                esp_wifi_deauth_sta(info.wifi_ap_staconnected.aid);
+                break;
             }
             LOGI("wifi", "station %s associated%s", mac, isRabbit ? " (rabbit)" : "");
             break;
@@ -64,10 +111,19 @@ static void onWifiEvent(arduino_event_id_t ev, arduino_event_info_t info) {
         case ARDUINO_EVENT_WIFI_AP_STADISCONNECTED: {
             const uint8_t *m = info.wifi_ap_stadisconnected.mac;
             snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
-            if (m[0] == 0x00 && m[1] == 0x13 && m[2] == 0xd3) rabbitAssociated = false;
+            if (isRabbitMac(m)) rabbitAssociated = false;
             LOGI("wifi", "station %s left", mac);
             break;
         }
+        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+            if (!inSetup) {
+                lanUp = true;
+                lanIp = IPAddress(info.got_ip.ip_info.ip.addr).toString();
+            }
+            break;
+        case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+            if (!inSetup) lanUp = false;
+            break;
         case ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED:
             LOGI("wifi", "DHCP lease %s", IPAddress(info.wifi_ap_staipassigned.ip.addr).toString().c_str());
             break;
@@ -99,6 +155,13 @@ void begin() {
         LOGI("wifi", "provisioned for rabbit %s; waiting for it to join", store::get(K_RABBIT_SN, "?").c_str());
     }
     lastRabbitContact = millis();
+
+    haveRabbitMac = parseMac(store::get(K_SETUP_BSSID), rabbitMac);
+    lanSsid = store::get(K_LAN_SSID);
+    lanPass = store::get(K_LAN_PASS);
+    WiFi.setAutoReconnect(false);  // reconnects are paced in loop() to spare the rabbit's AP
+    if (lanSsid.length()) lanRequested = true;
+    else LOGI("wifi", "no home Wi-Fi set - '%s' is open with a captive portal", ap.c_str());
 }
 
 String apSsid() { return ap; }
@@ -126,6 +189,9 @@ String scanForRabbit(String *bssidOut, int *channelOut) {
 }
 
 static bool joinSetup(const String &ssid, const String &bssid, int channel) {
+    inSetup = true;
+    lanUp = false;
+    WiFi.disconnect(false, false);
     uint8_t b[6];
     sscanf(bssid.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &b[0], &b[1], &b[2], &b[3], &b[4], &b[5]);
     // The setup network doesn't run DHCP - use a static address.
@@ -141,6 +207,8 @@ static bool joinSetup(const String &ssid, const String &bssid, int channel) {
 static void leaveSetup() {
     WiFi.disconnect(false, true);
     delay(200);
+    inSetup = false;
+    lanRequested = lanSsid.length() > 0;  // back to home Wi-Fi
 }
 
 // Plain HTTP/1.0 GET against the rabbit's own tiny web server.
@@ -337,6 +405,7 @@ bool pair() {
     store::set(K_SETUP_INFO, info);
     store::set(K_SETUP_BSSID, bssid);
     store::set(K_SETUP_SSID, ssid);
+    haveRabbitMac = parseMac(bssid, rabbitMac);
     LOGI("wifi", "setup page: %s", info.c_str());
 
 
@@ -393,7 +462,7 @@ void kickRabbit(uint32_t offMs) {
     // start over from bc.jsp.
     LOGI("wifi", "AP off for %lus to make the rabbit restart", (unsigned long)(offMs / 1000));
     WiFi.softAPdisconnect(false);
-    WiFi.mode(WIFI_STA);
+    WiFi.mode(WIFI_STA);  // keeps the home Wi-Fi connection
     delay(offMs);
     WiFi.mode(WIFI_AP_STA);
     startAp(ap);
@@ -408,7 +477,115 @@ void forget() {
     LOGI("wifi", "provisioning forgotten");
 }
 
+// ---------------- home Wi-Fi ----------------
+
+void setLan(const String &ssid, const String &pass) {
+    lanSsid = ssid;
+    lanPass = pass;
+    if (ssid.length()) {
+        store::set(K_LAN_SSID, ssid);
+        store::set(K_LAN_PASS, pass);
+    } else {
+        store::remove(K_LAN_SSID);
+        store::remove(K_LAN_PASS);
+    }
+    lanRequested = true;
+}
+
+void requestLanScan() { scanRequested = true; }
+
+static void lanStart() {
+    WiFi.disconnect(false, false);
+    lanUp = false;
+    if (lanSsid.isEmpty()) {
+        lanState = "unset";
+        lanAttempting = false;
+        return;
+    }
+    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);  // DHCP (the setup join used a static address)
+    WiFi.setHostname(MDNS_NAME);
+    WiFi.begin(lanSsid.c_str(), lanPass.c_str());
+    lanAttempting = true;
+    lanAttemptAt = millis();
+    lanState = "connecting";
+    LOGI("wifi", "joining home Wi-Fi '%s'", lanSsid.c_str());
+}
+
+static void lanLoop() {
+    uint32_t now = millis();
+    if (lanRequested && !inSetup) {
+        lanRequested = false;
+        lanStart();
+    }
+    if (lanAttempting && lanUp) {
+        lanAttempting = false;
+        lanState = "connected";
+        LOGI("wifi", "home Wi-Fi up: %s - http://%s.local/ (channel %d)", lanIp.c_str(), MDNS_NAME, WiFi.channel());
+        configTime(0, 0, "pool.ntp.org", "time.google.com");
+        rabbit::emit("lan", [](JsonObject o) { o["state"] = "connected"; o["ip"] = lanIp; });
+    } else if (lanAttempting && now - lanAttemptAt > LAN_CONNECT_TIMEOUT_MS) {
+        // give up for now - an unanswered STA keeps scanning all channels,
+        // which disturbs the rabbit's AP
+        lanAttempting = false;
+        WiFi.disconnect(false, false);
+        lanState = "unavailable";
+        LOGI("wifi", "home Wi-Fi '%s' not reachable - retrying in %lus", lanSsid.c_str(), (unsigned long)(LAN_RETRY_MS / 1000));
+        rabbit::emit("lan", [](JsonObject o) { o["state"] = "unavailable"; });
+    } else if (!lanAttempting && !lanUp && lanState == "connected") {
+        lanState = "unavailable";
+        LOGI("wifi", "home Wi-Fi lost");
+        rabbit::emit("lan", [](JsonObject o) { o["state"] = "unavailable"; });
+        lanAttemptAt = now - LAN_RETRY_MS + 5000;  // retry soon
+    } else if (!lanAttempting && !lanUp && lanSsid.length() && !inSetup && now - lanAttemptAt > LAN_RETRY_MS) {
+        lanStart();
+    }
+
+    // The rabbit's network is private while home Wi-Fi works, and open
+    // (captive portal to the web app) otherwise.
+    bool wantLock = lanUp;
+    if (wantLock != apLocked) {
+        apLocked = wantLock;
+        LOGI("wifi", "'%s' is now %s", ap.c_str(), wantLock ? "private: hidden, rabbit only" : "public: visible, captive portal");
+        if (wantLock) deauthOthers();
+        // the rabbit re-associates by name; if its session goes stale the
+        // watchdog restarts it
+        startAp(ap, wantLock);
+    }
+
+    if (!mdnsStarted && lanUp) {
+        mdnsStarted = MDNS.begin(MDNS_NAME);
+        if (mdnsStarted) {
+            MDNS.addService("http", "tcp", 80);
+            LOGI("wifi", "mDNS: %s.local", MDNS_NAME);
+        }
+    }
+
+    if (scanRequested && !inSetup && !lanAttempting) {
+        scanRequested = false;
+        int n = WiFi.scanNetworks(false, false, false, 200);
+        rabbit::emit("lanScan", [n](JsonObject o) {
+            JsonArray a = o["networks"].to<JsonArray>();
+            for (int i = 0; i < n; i++) {
+                String ssid = WiFi.SSID(i);
+                bool dup = false;
+                for (JsonVariant v : a) dup |= v["ssid"] == ssid;
+                if (ssid.isEmpty() || dup || ssid == ap || ssid.startsWith(RABBIT_SETUP_SSID_PREFIX)) continue;
+                JsonObject n = a.add<JsonObject>();
+                n["ssid"] = ssid;
+                n["rssi"] = WiFi.RSSI(i);
+                n["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
+            }
+        });
+        WiFi.scanDelete();
+    }
+}
+
+bool lanConnected() { return lanUp; }
+
+bool fromRabbitNetwork(IPAddress local) { return local == IPAddress(AP_IP_A, AP_IP_B, AP_IP_C, AP_IP_D); }
+
 void loop() {
+    lanLoop();
     if (rabbit::state().xmpp) lastRabbitContact = millis();
     if (pairRequested) {
         pairRequested = false;
@@ -445,6 +622,12 @@ void statusJson(JsonObject o) {
     o["setupInfo"] = store::get(K_SETUP_INFO);
     o["rabbitSn"] = store::get(K_RABBIT_SN);
     o["lastPair"] = lastPairResult;
+    JsonObject lan = o["lan"].to<JsonObject>();
+    lan["ssid"] = lanSsid;
+    lan["state"] = lanState;
+    lan["ip"] = lanUp ? lanIp : "";
+    lan["host"] = String(MDNS_NAME) + ".local";
+    o["private"] = (bool)apLocked;  // hidden + rabbit-only
 }
 
 }  // namespace wifimgr

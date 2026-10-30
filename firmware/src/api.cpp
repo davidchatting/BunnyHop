@@ -152,6 +152,13 @@ void execute(JsonObjectConst cmd, JsonObject reply) {
     } else if (c == "pair") {
         wifimgr::requestPair();
         ok = true;
+    } else if (c == "lan") {
+        // {"cmd":"lan","ssid":"MyWiFi","password":"..."}; empty ssid forgets
+        wifimgr::setLan(cmd["ssid"] | "", cmd["password"] | "");
+        ok = true;
+    } else if (c == "lanScan") {
+        wifimgr::requestLanScan();  // networks arrive as a "lanScan" event
+        ok = true;
     } else if (c == "forget") {
         wifimgr::forget();
         ok = true;

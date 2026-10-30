@@ -122,8 +122,10 @@ void setup() {
             r->send(200, "application/octet-stream", "");
             return;
         }
-        // Captive-portal probes and stray hostnames -> the app
-        r->redirect("http://" AP_IP_STR "/");
+        // Captive-portal probes and stray hostnames -> the app, but only for
+        // devices on the rabbit's network (home Wi-Fi users can't reach it)
+        if (wifimgr::fromRabbitNetwork(r->client()->localIP())) r->redirect("http://" AP_IP_STR "/");
+        else r->send(404, "text/plain", "not found");
     });
     server.begin();
     LOGI("boot", "web server on http://%s/", AP_IP_STR);

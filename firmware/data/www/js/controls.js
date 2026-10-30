@@ -65,10 +65,47 @@ const Controls = (() => {
     refreshSounds();
   }
 
+  // ---- home Wi-Fi
+  function initLan() {
+    $('lan-scan').onclick = () => {
+      $('lan-scan').textContent = 'Scanning…';
+      report(rabbit.send({ cmd: 'lanScan' }));
+    };
+    rabbit.on('lanScan', (m) => {
+      $('lan-scan').textContent = 'Scan';
+      const dl = $('lan-networks');
+      dl.innerHTML = '';
+      for (const n of (m.networks || []).sort((a, b) => b.rssi - a.rssi)) {
+        const o = document.createElement('option');
+        o.value = n.ssid;
+        o.label = n.open ? 'open' : '';
+        dl.appendChild(o);
+      }
+      $('lan-ssid').focus();
+    });
+    $('lan-form').onsubmit = (e) => {
+      e.preventDefault();
+      const ssid = $('lan-ssid').value.trim();
+      if (!ssid) return;
+      const onRabbitNet = location.hostname === '192.168.4.1';
+      if (onRabbitNet && !confirm('Once BunnyHop joins ' + ssid + ', this network becomes private to the rabbit and ' +
+        'this device will be disconnected. Reconnect to ' + ssid + ' and open http://bunnyhop.local/. Continue?')) return;
+      report(rabbit.send({ cmd: 'lan', ssid, password: $('lan-pass').value }));
+      $('lan-pass').value = '';
+      Events.add('Joining ' + ssid + '…');
+    };
+    $('lan-forget').onclick = () => {
+      if (!confirm('Forget the home Wi-Fi? The rabbit\'s network will become open again.')) return;
+      report(rabbit.send({ cmd: 'lan', ssid: '' }));
+      $('lan-ssid').value = '';
+    };
+  }
+
   function init(r) {
     rabbit = r;
     initLeds();
     initSounds();
+    initLan();
     $('pair').onclick = () => {
       if (confirm('Look for a rabbit in pairing mode (blue lights) and connect it to this bridge?')) report(rabbit.pair());
     };

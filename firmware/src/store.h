@@ -20,3 +20,5 @@ void clearAll();
 #define K_AP_SSID "apssid"        // our AP SSID, derived from the rabbit
 #define K_XMPP_PW "xmpppw"        // XMPP password the rabbit registered with us
 #define K_SETUP_INFO "setupinfo"  // identifying info scraped from the setup page
+#define K_LAN_SSID "lanssid"      // home Wi-Fi network (public side)
+#define K_LAN_PASS "lanpass"
