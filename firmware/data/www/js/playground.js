@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * playground.js - live-coding p5.js sketches wired to the rabbit.
  *

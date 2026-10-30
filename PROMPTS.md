@@ -215,3 +215,11 @@ Clarifying answers are included where they changed the direction of the work.
 > look for rfid now
 
 > i don't think I have the right type
+
+## 12.
+
+> tell me about GPL-2
+
+## 13.
+
+> go with GPL-2.0-or-later for everything

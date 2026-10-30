@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 #include "rabbit.h"
 #include <map>
 #include "config.h"

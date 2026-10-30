@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * controls.js - interface components that send commands to the rabbit
  * (ears, LEDs, audio, manual/raw commands, pairing).

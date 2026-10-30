@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Grab a frame from the USB camera watching the rabbit.
 usage: snap.py OUT.jpg [exposure]   (exposure: V4L2 absolute units, lower = darker)"""
 import sys, time, cv2

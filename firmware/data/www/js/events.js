@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * events.js - incoming events from the bridge -> page UI
  * (status badges, event log, RFID list, diagnostics).

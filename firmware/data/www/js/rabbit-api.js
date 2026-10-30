@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * rabbit-api.js - client for the nabaztag-bridge WebSocket API.
  *

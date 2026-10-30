@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * sketch.js - main entry: connects to the bridge, starts the UI modules and
  * draws the live rabbit (p5.js instance mode).

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 #include "rabbit_http.h"
 #include <LittleFS.h>
 #include "adpcm.h"

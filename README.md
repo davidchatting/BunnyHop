@@ -250,9 +250,22 @@ This project stands on years of community reverse-engineering:
 - **Arduino-ESP32** / ESP-IDF (Espressif, Apache-2.0) and LittleFS.
 - Sample audio was generated for this project (tones with FFmpeg, speech with eSpeak NG).
 
-This project's own licence has not been chosen yet. Because it redistributes
-OpenJabNab's copy of the Violet bootcode and follows OpenJabNab's GPL-2.0 code
-closely, GPL-2.0-or-later is the natural fit.
+## Licence
+
+Copyright (C) 2026 the nabaztag-bridge contributors.
+
+This project is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either **version 2 of the License, or (at your option) any later
+version** (`GPL-2.0-or-later`). It is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; see [LICENSE](LICENSE) for details.
+
+It is GPL because it redistributes OpenJabNab's copy of the Violet bootcode and
+follows OpenJabNab's GPL-2.0 server code closely. Bundled third-party
+components keep their own licences (listed above): p5.js (LGPL-2.1) is served
+as-is from `firmware/data/www/lib/`, and the firmware links ESPAsyncWebServer
+and AsyncTCP (LGPL-3.0), ArduinoJson (MIT) and Arduino-ESP32 (Apache-2.0) -
+all compatible with distribution under GPL-3.0, which "or later" permits.
 
 ## Prompt log
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 #include "eventlog.h"
 #include <stdarg.h>
 

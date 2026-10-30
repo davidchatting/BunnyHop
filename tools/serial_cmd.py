@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Send console commands to the bridge over USB serial and print its output.
 
 usage: serial_cmd.py [-p PORT] [-t SECONDS] [command ...]
