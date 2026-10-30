@@ -14,9 +14,10 @@ Playground.init(rabbit);
 
 new p5((p) => {
   const W = 360, H = 400;
-  // LED positions in drawing coordinates: bottom, left, middle, right, nose
-  const LED_POS = [[180, 372], [130, 285], [180, 290], [230, 285], [180, 168]];
-  const EAR_PIVOT = [[150, 120], [210, 120]];
+  // The drawing faces the viewer, so the rabbit's left is on screen right.
+  // LED positions: bottom, left, middle, right, nose. Ears: left, right.
+  const LED_POS = [[180, 372], [230, 285], [180, 290], [130, 285], [180, 168]];
+  const EAR_PIVOT = [[210, 120], [150, 120]];
   let shown = [0, 0];      // ear positions being drawn (eased)
   let dragging = -1;
   let pulse = 0;           // flash on incoming events
@@ -51,8 +52,8 @@ new p5((p) => {
     const [x, y] = EAR_PIVOT[i];
     p.push();
     p.translate(x, y);
-    // left ear is the rabbit's left (viewer's right) - mirror rotation
-    p.rotate(i === 0 ? -earAngle(pos) * 0.5 : earAngle(pos) * 0.5);
+    // ears fall outwards: the rabbit's left (screen right) turns clockwise
+    p.rotate(i === 0 ? earAngle(pos) * 0.5 : -earAngle(pos) * 0.5);
     p.stroke(200);
     p.strokeWeight(2);
     p.fill(dragging === i ? '#fff4e8' : 255);
@@ -163,7 +164,7 @@ new p5((p) => {
     const [mx, my] = scaled();
     const [x, y] = EAR_PIVOT[dragging];
     let a = Math.atan2(mx - x, -(my - y)); // 0 = up
-    if (dragging === 0) a = -a;
+    if (dragging === 1) a = -a;
     const pos = Math.round(p.constrain((a / p.TWO_PI) * 2 * 17, 0, 16));
     shown[dragging] = pos;
     const l = dragging === 0 ? pos : -1;

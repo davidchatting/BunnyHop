@@ -290,8 +290,8 @@ static packets::Bytes initPacket() {
     // included if a client has set them, so a reboot doesn't flatten them.
     auto &s = rabbit::state();
     std::vector<std::pair<uint8_t, uint8_t>> svc = {{packets::SVC_NOSE, 0}};
-    if (s.cmdEarLeft >= 0) svc.push_back({packets::SVC_LEFT_EAR, (uint8_t)s.cmdEarLeft});
-    if (s.cmdEarRight >= 0) svc.push_back({packets::SVC_RIGHT_EAR, (uint8_t)s.cmdEarRight});
+    if (s.cmdEarLeft >= 0) svc.push_back({packets::SVC_RABBIT_LEFT_EAR, (uint8_t)s.cmdEarLeft});
+    if (s.cmdEarRight >= 0) svc.push_back({packets::SVC_RABBIT_RIGHT_EAR, (uint8_t)s.cmdEarRight});
     return packets::trame({packets::ambient(svc), packets::sleep(false)});
 }
 
@@ -371,7 +371,9 @@ static void handleStanza(const String &d) {
             String ev = between(d, "<event>", "</event>");
             rabbit::onButton(clicks, ev.length() ? ev.toInt() : -1);
         } else if (d.indexOf("<ears") >= 0) {
-            rabbit::onEars(between(d, "<left>", "</left>").toInt(), between(d, "<right>", "</right>").toInt());
+            // Violet's <left> is assumed to be the rabbit's right ear, as for
+            // commands (inferred - see docs/PROTOCOL.md)
+            rabbit::onEars(between(d, "<right>", "</right>").toInt(), between(d, "<left>", "</left>").toInt());
         } else {
             LOGI("xmpp", "unhandled message: %s", d.c_str());
             rabbit::emit("xmpp-message", [&](JsonObject o) { o["xml"] = d; });

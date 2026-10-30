@@ -102,12 +102,12 @@ bool setEars(int left, int right, String *err) {
     std::vector<std::pair<uint8_t, uint8_t>> s;
     if (left >= 0) {
         left = constrain(left, 0, EAR_MAX);
-        s.push_back({packets::SVC_LEFT_EAR, (uint8_t)left});
+        s.push_back({packets::SVC_RABBIT_LEFT_EAR, (uint8_t)left});
         st.cmdEarLeft = left;
     }
     if (right >= 0) {
         right = constrain(right, 0, EAR_MAX);
-        s.push_back({packets::SVC_RIGHT_EAR, (uint8_t)right});
+        s.push_back({packets::SVC_RABBIT_RIGHT_EAR, (uint8_t)right});
         st.cmdEarRight = right;
     }
     if (s.empty()) {

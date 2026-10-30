@@ -145,13 +145,13 @@
       }, wait);
     }
 
-    /** Ear positions 0..16 (null/undefined leaves an ear alone). */
+    /** Ear positions 0..16, rabbit's own left/right (null/undefined leaves an ear alone). */
     ears(left, right, { throttle = false } = {}) {
       const c = { cmd: 'ears', left: clampEar(left), right: clampEar(right) };
       return throttle ? this.sendThrottled('ears', c) : this.send(c);
     }
 
-    /** One LED: 0 bottom, 1 left, 2 middle, 3 right, 4 nose; -1 = all. */
+    /** One LED: 0 bottom, 1 left, 2 middle, 3 right (rabbit's own sides), 4 nose; -1 = all. */
     led(id, color, { throttle = false } = {}) {
       const c = { cmd: 'led', led: id, color: toHex(color) };
       return throttle ? this.sendThrottled('leds', c) : this.send(c);
@@ -169,7 +169,7 @@
     /**
      * Choreography: steps run in order; delay is in frames of tempo*10 ms.
      *   {type:'led', led:0..4, color:'#rgb', delay}
-     *   {type:'motor', ear:0|1, pos:0..16, dir:0|1, delay}
+     *   {type:'motor', ear:0|1 (rabbit's left|right), pos:0..16, dir:0|1, delay}
      */
     chor(steps, tempo = 10) { return this.send({ cmd: 'chor', tempo, steps }); }
 

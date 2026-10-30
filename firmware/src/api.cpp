@@ -90,6 +90,7 @@ void execute(JsonObjectConst cmd, JsonObject reply) {
     } else if (c == "chor") {
         // {"tempo":10, "steps":[{"delay":0,"type":"led","led":1,"color":"#f00"},
         //                        {"delay":5,"type":"motor","ear":0,"pos":8,"dir":0}]}
+        // ear 0 = rabbit's left, 1 = rabbit's right
         packets::Chor ch(cmd["tempo"] | 10);
         for (JsonObjectConst s : cmd["steps"].as<JsonArrayConst>()) {
             String t = s["type"] | "";
@@ -103,7 +104,8 @@ void execute(JsonObjectConst cmd, JsonObject reply) {
                 parseColor(s["color"], col);
                 ch.allLeds(d, col.r, col.g, col.b);
             } else if (t == "motor") {
-                ch.motor(d, s["ear"] | 0, s["pos"] | 0, s["dir"] | 0);
+                // API ear: 0 = rabbit's left, 1 = rabbit's right; Violet motors are the other way round
+                ch.motor(d, (s["ear"] | 0) ? 0 : 1, s["pos"] | 0, s["dir"] | 0);
             }
         }
         ok = rabbit::chor(ch.build(), &err);

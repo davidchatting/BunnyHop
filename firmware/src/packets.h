@@ -19,8 +19,10 @@ enum Service : uint8_t {
     SVC_WEATHER = 1,
     SVC_STOCK = 2,
     SVC_PERIPH = 3,
-    SVC_LEFT_EAR = 4,
-    SVC_RIGHT_EAR = 5,
+    // Violet calls 4 "left ear", but it moves the rabbit's RIGHT ear (camera-
+    // verified, unmirrored). Names below are rabbit-centric.
+    SVC_RABBIT_RIGHT_EAR = 4,
+    SVC_RABBIT_LEFT_EAR = 5,
     SVC_EMAIL = 6,
     SVC_AIR = 7,
     SVC_NOSE = 8,
@@ -43,11 +45,13 @@ Block sleep(bool sleep);
 class Chor {
    public:
     explicit Chor(uint8_t tempo10ms = 10);  // frame duration in 10 ms units
-    // LED ids follow OpenJabNab: 0 bottom, 1 left, 2 middle, 3 right, 4 top (nose)
+    // LED ids follow OpenJabNab: 0 bottom, 1 left, 2 middle, 3 right, 4 top (nose);
+    // left/right are the rabbit's own (camera-verified)
     Chor &led(uint8_t delay, uint8_t led, uint8_t r, uint8_t g, uint8_t b);
     Chor &ledOff(uint8_t delay, uint8_t led);
     Chor &allLeds(uint8_t delay, uint8_t r, uint8_t g, uint8_t b);  // opcode 9 (bootcode v16+)
-    // ear 0 = left, 1 = right; pos 0..16; dir 0 = forward, 1 = backward
+    // motor 0 = rabbit's RIGHT ear, 1 = rabbit's LEFT ear (camera-verified);
+    // pos 0..16; dir 0 = forward, 1 = backward
     Chor &motor(uint8_t delay, uint8_t ear, uint8_t pos, uint8_t dir);
     Bytes build() const;
 

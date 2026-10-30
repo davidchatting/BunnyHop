@@ -1,5 +1,6 @@
 #include "rabbit_http.h"
 #include <LittleFS.h>
+#include "adpcm.h"
 #include "config.h"
 #include "eventlog.h"
 #include "rabbit.h"
@@ -89,7 +90,14 @@ static void recordBody(AsyncWebServerRequest *r, uint8_t *data, size_t len, size
 static void recordDone(AsyncWebServerRequest *r) {
     logReq(r);
     if (recFile) recFile.close();
-    if (recBytes) rabbit::onRecording(recPath, recBytes);
+    if (recBytes) {
+        // keep the original (IMA ADPCM) and add a browser-playable PCM copy
+        String pcm = recPath;
+        pcm.replace(".wav", "-pcm.wav");
+        bool ok = adpcmToPcmWav(LittleFS, recPath.c_str(), pcm.c_str());
+        LOGI("rabbit", "recording %s -> %s: %s", recPath.c_str(), pcm.c_str(), ok ? "converted" : "not IMA ADPCM, kept as is");
+        rabbit::onRecording(ok ? pcm : recPath, recBytes);
+    }
     recBytes = 0;
     r->send(200, "application/octet-stream", "");
 }

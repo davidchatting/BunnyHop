@@ -3,10 +3,12 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
+#include "adpcm.h"
 #include "api.h"
 #include "chor_server.h"
 #include "config.h"
 #include "eventlog.h"
+#include "packets.h"
 #include "net_services.h"
 #include "rabbit.h"
 #include "rabbit_http.h"
@@ -20,7 +22,7 @@ static String serialLine;
 static void printHelp() {
     Serial.println(
         "commands:\n"
-        "  status | scan | probe | pair | forget | restart\n"
+        "  status | scan | probe | pair | forget | restart | kick [s] | diag [node] | dump PATH\n"
         "  {json}            any API command, e.g. {\"cmd\":\"ears\",\"left\":4,\"right\":10}\n"
         "  ears L R | led N #rrggbb | play URL | prog TEXT(\\n for newline)\n"
         "  raw HEX | sleep | wake | reboot");
@@ -54,7 +56,27 @@ static void serialCommand(String line) {
     else if (cmd == "pair") wifimgr::requestPair();
     else if (cmd == "forget") wifimgr::forget();
     else if (cmd == "diag") runJson("{\"cmd\":\"diag\",\"node\":\"" + (rest.length() ? rest : String("getrunningstate")) + "\"}");
-    else if (cmd == "kick") wifimgr::kickRabbit((rest.toInt() > 0 ? rest.toInt() : 30) * 1000UL);
+    else if (cmd == "dump") {
+        // base64 of a file on the bridge's flash, for offline inspection
+        File f = LittleFS.open(rest, "r");
+        if (!f) Serial.println("no such file");
+        else {
+            packets::Bytes b(f.size());
+            f.read(b.data(), b.size());
+            f.close();
+            Serial.printf("DUMP %s %u\n", rest.c_str(), (unsigned)b.size());
+            String enc = packets::base64(b);
+            for (size_t i = 0; i < enc.length(); i += 76) {
+                Serial.println(enc.substring(i, i + 76));
+                delay(2);
+            }
+            Serial.println("END DUMP");
+        }
+    } else if (cmd == "convert") {
+        String dst = rest;
+        dst.replace(".wav", "-pcm.wav");
+        Serial.println(adpcmToPcmWav(LittleFS, rest.c_str(), dst.c_str()) ? "converted -> " + dst : String("conversion failed"));
+    } else if (cmd == "kick") wifimgr::kickRabbit((rest.toInt() > 0 ? rest.toInt() : 30) * 1000UL);
     else if (cmd == "restart") ESP.restart();
     else if (cmd == "ears") {
         int l = -1, r = -1;
