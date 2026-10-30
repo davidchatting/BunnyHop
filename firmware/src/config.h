@@ -49,3 +49,11 @@
 
 // Choreography files are served on their own port (see chor_server.h)
 #define CHOR_PORT 8080
+
+// A choreography counts as "in flight" until the rabbit has fetched it, or
+// this long at most (see rabbit::chor)
+#define CHOR_FLIGHT_TIMEOUT_MS 3000
+// Minimum time a delivered chor is left running before a queued one replaces
+// it. The rabbit blanks the LEDs for ~0.7 s while it downloads each new chor,
+// so faster updates would show mostly dark LEDs.
+#define CHOR_SETTLE_MS 1500

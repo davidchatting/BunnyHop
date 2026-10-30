@@ -124,6 +124,14 @@ function draw() {
 
 Five examples are built in (Examples… menu). `Ctrl/⌘-Enter` runs.
 
+### Without joining the bridge's Wi-Fi
+
+`python3 tools/serial_bridge.py` serves the web app on http://localhost:8097/
+and relays it to the bridge over USB serial - handy on a development machine
+without Wi-Fi. Everything except audio upload and recordings works; the
+commands run on the real firmware and rabbit. (`tools/mock_bridge.py` serves
+the app against a simulated rabbit instead.)
+
 ### Rabbit API for other projects
 
 `firmware/data/www/js/rabbit-api.js` is standalone (no p5.js). Copy it into any
@@ -169,7 +177,7 @@ reconnect).
 | `firmware/src/adpcm.*` | Microphone recordings: IMA ADPCM → PCM WAV |
 | `firmware/data/vl/bootcode.bin` | Violet's original bootcode (unmodified) |
 | `firmware/data/www/` | Web app: `index.html`, `css/style.css`, `js/sketch.js` (main), `js/rabbit-api.js`, `js/controls.js`, `js/events.js`, `js/playground.js`, `lib/p5.min.js.gz` |
-| `tools/` | Serial console client, mock bridge for UI work without hardware, camera snapshot |
+| `tools/` | Serial console client, serial↔WebSocket relay (`serial_bridge.py`), mock bridge for UI work without hardware, camera snapshot |
 | `research/` | Reference sources used to establish the protocol |
 
 The ESP32 runs `WIFI_AP_STA`. The radio has one channel, so while the STA side
@@ -199,6 +207,11 @@ Rabbit-side protocol details, including the problems found and fixed, are in
   "hold" choreography. A button click, a sleep, or another program ends it.
   Outside choreographies the bootcode drives the LEDs itself (per its source,
   a breathing base LED and info-service animations).
+- **LED update rate:** the rabbit blanks its LEDs for ~0.7 s while it downloads
+  each new choreography, so the bridge shows each LED update for at least
+  1.5 s and keeps only the latest pending one. For smooth animation, send a
+  multi-step choreography (see the "Rainbow LEDs" example) rather than
+  streaming colours.
 - **Latency:** ears start moving within ~1 s; LEDs/choreographies ~0.9 s; audio ~2-3 s (the rabbit
   downloads the whole resource before playing).
 - **No volume control** (hardware wheel only); **MP3/WAV only from the bridge**

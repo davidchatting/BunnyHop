@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "api.h"
+#include <map>
 #include <LittleFS.h>
 #include "config.h"
 #include "eventlog.h"
@@ -191,9 +192,17 @@ static void onWs(AsyncWebSocket *, AsyncWebSocketClient *client, AwsEventType ty
         LOGI("api", "ws client #%u disconnected", client->id());
     } else if (type == WS_EVT_DATA) {
         AwsFrameInfo *info = (AwsFrameInfo *)arg;
-        if (!(info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)) return;
+        // Reassemble messages that arrive in several pieces (large chors)
+        static std::map<uint32_t, String> partial;
+        String &buf = partial[client->id()];
+        if (info->index == 0) buf = "";
+        if (info->len > 32768) return;  // ignore absurdly large messages
+        buf.concat((const char *)data, len);
+        if (!info->final || info->index + len < info->len) return;
+        String msg = buf;
+        partial.erase(client->id());
         JsonDocument in;
-        if (deserializeJson(in, data, len)) {
+        if (deserializeJson(in, msg)) {
             client->text("{\"type\":\"ack\",\"ok\":false,\"error\":\"bad json\"}");
             return;
         }
@@ -208,7 +217,13 @@ void begin(AsyncWebServer &server) {
     ws.onEvent(onWs);
     server.addHandler(&ws);
 
-    rabbit::setEventSink([](JsonDocument &doc) { sendDoc(nullptr, doc); });
+    rabbit::setEventSink([](JsonDocument &doc) {
+        sendDoc(nullptr, doc);
+        // also on serial, for tools/serial_bridge.py
+        Serial.print("EVT ");
+        serializeJson(doc, Serial);
+        Serial.println();
+    });
     eventlog::setSink([](const String &cat, const String &msg) {
         if (!ws.count()) return;
         JsonDocument d;

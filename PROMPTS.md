@@ -223,3 +223,11 @@ Clarifying answers are included where they changed the direction of the work.
 ## 13.
 
 > go with GPL-2.0-or-later for everything
+
+## 14.
+
+> push it to github as a private repo
+
+## 15.
+
+> can tyou test the webinteface?

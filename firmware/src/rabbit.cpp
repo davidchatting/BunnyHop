@@ -142,10 +142,50 @@ bool chorFile(uint32_t id, packets::Bytes &out) {
     return ok;
 }
 
-bool chor(const packets::Bytes &file, String *err) {
+// The rabbit needs ~0.9 s to download and start a choreography, and a new
+// one arriving mid-download cancels the old without starting itself. So
+// while one is in flight, only the latest request is kept and sent when the
+// rabbit has fetched the current one (chorDelivered) - continuous senders
+// like p5 sketches then get the fastest rate the rabbit can manage.
+static bool chorInFlight = false;
+static uint32_t chorSentAt = 0;
+static bool chorPending = false;
+static packets::Bytes pendingChor;
+static volatile bool chorDone = false;
+static uint32_t chorDeliveredAt = 0;
+
+static bool sendChorNow(const packets::Bytes &file, String *err) {
     uint32_t id = storeChor(file);
     String prog = programHeader() + "CH http://" AP_IP_STR ":" + String(CHOR_PORT) + "/" + String(id) + ".chor\n";
-    return send({packets::message(prog)}, err, "chor");
+    bool ok = send({packets::message(prog)}, err, "chor");
+    chorInFlight = ok;
+    chorSentAt = millis();
+    return ok;
+}
+
+bool chor(const packets::Bytes &file, String *err) {
+    if (chorInFlight && millis() - chorSentAt < CHOR_FLIGHT_TIMEOUT_MS) {
+        pendingChor = file;
+        chorPending = true;
+        return true;  // queued; superseded by any newer request
+    }
+    return sendChorNow(file, err);
+}
+
+void chorDelivered() { chorDone = true; }
+
+void loop() {
+    if (chorDone) {
+        chorDone = false;
+        chorInFlight = false;
+        chorDeliveredAt = millis();
+    }
+    if (chorInFlight && millis() - chorSentAt >= CHOR_FLIGHT_TIMEOUT_MS) chorInFlight = false;
+    // give the rabbit a moment to start the delivered chor before replacing it
+    if (chorPending && !chorInFlight && millis() - chorDeliveredAt >= CHOR_SETTLE_MS) {
+        chorPending = false;
+        sendChorNow(pendingChor, nullptr);
+    }
 }
 
 bool setLeds(const Rgb colors[5], String *err) {

@@ -123,6 +123,7 @@ void begin(uint16_t port) {
                         if (conns[i] == k) conns.erase(conns.begin() + i);
                     xSemaphoreGiveRecursive(mtx);
                     if (k->file) k->file.close();
+                    else if (k->responded) rabbit::chorDelivered();
                     delete k;
                     delete c;
                 },

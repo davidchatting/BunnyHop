@@ -72,5 +72,7 @@ bool reboot(String *err = nullptr);
 bool chorFile(uint32_t id, packets::Bytes &out);
 
 void stateJson(JsonObject o);
+void loop();
+void chorDelivered();  // chor_server: the rabbit finished fetching a chor
 
 }  // namespace rabbit

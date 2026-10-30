@@ -134,6 +134,7 @@ void loop() {
     wifimgr::loop();
     xmpp::loop();
     chor_server::loop();
+    rabbit::loop();
     net_services::loop();
     api::loop();
     while (Serial.available()) {

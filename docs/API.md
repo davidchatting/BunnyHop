@@ -62,6 +62,11 @@ Steps run in order; `delay` is the number of frames to wait before the step.
 `motor`: `ear` 0 = rabbit's left, 1 = right; `pos` 0-16; `dir` 0 forward, 1 backward.
 `all` sets every LED (bootcode opcode 9).
 
+Choreographies (including `led`/`leds`) are coalesced: while one is being
+downloaded by the rabbit, newer requests replace each other and only the
+latest is sent, at most every 1.5 s. The ack for a coalesced request is
+`ok: true` immediately.
+
 Note: `led`/`leds` send a choreography that holds the colours for up to an
 hour, because the rabbit only shows LED colours while a choreography runs.
 Any later program (another LED command, audio, chor) or a button click ends it.
