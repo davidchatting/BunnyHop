@@ -253,3 +253,9 @@ Clarifying answers are included where they changed the direction of the work.
 ## 19.
 
 > does the interactive rabbit work with touch events on ipad?
+
+## 20.
+
+> update the hello message to something more fun, also better chime, big ben? also ipad still doesn't seem to work?
+
+> no that message is not fun, just say Hello I'm nabaztag, that'll be fine

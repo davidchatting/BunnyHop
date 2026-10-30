@@ -115,7 +115,7 @@ void setup() {
 
     rabbit_http::begin(server);
     api::begin(server);
-    server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html").setCacheControl("max-age=60");
+    server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html").setCacheControl("no-cache");  // always revalidate: devices pick up web app updates
     server.onNotFound([](AsyncWebServerRequest *r) {
         if (rabbit_http::isRabbitPath(r->url())) {
             LOGI("rabbit", "unhandled %s %s", r->methodToString(), r->url().c_str());

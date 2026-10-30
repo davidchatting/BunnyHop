@@ -71,7 +71,10 @@
     </details>
   </main>
 
-  <input type="color" id="led-picker" class="picker">
+  <div id="palette" class="palette" hidden>
+    <div class="swatches"></div>
+    <label class="custom">Custom <input type="color" id="led-custom"></label>
+  </div>
 
   <script src="lib/p5.min.js"></script>
   <script src="js/rabbit-api.js"></script>

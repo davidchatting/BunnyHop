@@ -142,8 +142,7 @@ new p5((p) => {
   }
 
   // Input uses native Pointer Events (finger, pencil and mouse alike) rather
-  // than p5's mouse/touch mapping, which doesn't fire on iPad Safari. The
-  // colour picker opens from 'click', which Safari counts as a user action.
+  // than p5's mouse/touch mapping, which doesn't fire on iPad Safari.
   function canvasPoint(e) {
     const r = p.canvas.getBoundingClientRect();
     return [((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height];
@@ -184,7 +183,12 @@ new p5((p) => {
       if (!rabbit.rabbitConnected) return;
       const [x, y] = canvasPoint(e);
       const led = hitLed(x, y);
-      if (led >= 0) Controls.pickLedColor(led, leds[led]);
+      if (led >= 0) {
+        const r = p.canvas.getBoundingClientRect();
+        const [lx, ly] = LED_POS[led];
+        Controls.pickLedColor(led, leds[led], window.scrollX + r.left + (lx * r.width) / W,
+          window.scrollY + r.top + (ly * r.height) / H);
+      }
     });
   }
 }, document.getElementById('rabbit-view'));

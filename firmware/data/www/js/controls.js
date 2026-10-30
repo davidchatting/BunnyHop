@@ -9,20 +9,51 @@ const Controls = (() => {
 
   const report = (p) => p && p.catch && p.catch((e) => Events.add('⚠ ' + e.message));
 
-  // ---- LEDs: tapping a light on the drawing opens the native colour picker
+  // ---- LEDs: tapping a light on the drawing shows a row of swatches
+  // (plain buttons - reliable on every device, unlike opening the native
+  // colour picker from script, which iPad Safari tends to block)
+  const SWATCHES = ['#ff0000', '#ff7a00', '#ffd400', '#00d000', '#00c8ff',
+    '#0040ff', '#a000ff', '#ff00a0', '#ffffff'];
   let pickingLed = -1;
-  function pickLedColor(i, current) {
+
+  function closePalette() {
+    $('palette').hidden = true;
+    pickingLed = -1;
+  }
+
+  // x, y: page coordinates of the tapped light
+  function pickLedColor(i, current, x, y) {
     pickingLed = i;
-    const picker = $('led-picker');
-    picker.value = current || '#ffffff';
-    picker.click();
+    const pal = $('palette');
+    $('led-custom').value = current && current !== '#000000' ? current : '#ffffff';
+    pal.hidden = false;
+    const w = pal.offsetWidth;
+    pal.style.left = Math.max(8, Math.min(document.documentElement.clientWidth - w - 8, x - w / 2)) + 'px';
+    pal.style.top = y + 24 + 'px';
+  }
+
+  function setLed(color) {
+    if (pickingLed >= 0) report(rabbit.led(pickingLed, color));
   }
 
   function initLeds() {
-    const picker = $('led-picker');
-    // live preview while dragging inside the picker, coalesced by the bridge
-    picker.addEventListener('input', () => {
-      if (pickingLed >= 0) report(rabbit.led(pickingLed, picker.value));
+    const box = $('palette').querySelector('.swatches');
+    for (const c of SWATCHES) {
+      const b = document.createElement('button');
+      b.style.background = c;
+      b.title = c;
+      b.onclick = () => { setLed(c); closePalette(); };
+      box.appendChild(b);
+    }
+    const off = document.createElement('button');
+    off.className = 'off';
+    off.textContent = 'off';
+    off.onclick = () => { setLed('#000000'); closePalette(); };
+    box.appendChild(off);
+    $('led-custom').addEventListener('change', (e) => { setLed(e.target.value); closePalette(); });
+    // tap anywhere else to close
+    document.addEventListener('pointerdown', (e) => {
+      if (!$('palette').hidden && !e.target.closest('#palette') && !e.target.closest('#rabbit-view')) closePalette();
     });
     $('lights-off').onclick = () => report(rabbit.leds(['#000', '#000', '#000', '#000', '#000']));
     $('ears-up').onclick = () => report(rabbit.ears(0, 0));

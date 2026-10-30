@@ -89,8 +89,25 @@ details summary { cursor: pointer; color: var(--muted); font-size: 13px; text-tr
 .info dt { color: var(--muted); }
 .info dd { margin: 0; word-break: break-all; }
 
-/* native colour picker, opened when an LED on the drawing is tapped */
-.picker { position: fixed; left: 50%; top: 40%; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; }
+/* colour swatches shown when a light on the drawing is tapped */
+.palette {
+  position: absolute;
+  z-index: 10;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .15);
+  padding: 10px;
+  width: 232px;
+}
+.palette .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.palette .swatches button {
+  width: 36px; height: 36px; padding: 0; border-radius: 50%;
+  border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line);
+}
+.palette .swatches button.off { background: #fff; color: var(--muted); font-size: 11px; }
+.palette .custom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-size: 14px; color: var(--muted); }
+.palette .custom input { width: 48px; height: 32px; border: 1px solid var(--line); border-radius: 6px; padding: 2px; background: #fff; }
 
 h3 { font-size: 14px; margin: 16px 0 6px; }
 .lan label { display: block; font-size: 14px; margin: 8px 0; color: var(--muted); }
