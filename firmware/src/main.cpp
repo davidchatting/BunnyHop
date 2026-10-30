@@ -77,7 +77,8 @@ static void serialCommand(String line) {
         String dst = rest;
         dst.replace(".wav", "-pcm.wav");
         Serial.println(adpcmToPcmWav(LittleFS, rest.c_str(), dst.c_str()) ? "converted -> " + dst : String("conversion failed"));
-    } else if (cmd == "kick") wifimgr::kickRabbit((rest.toInt() > 0 ? rest.toInt() : 30) * 1000UL);
+    } else if (cmd == "lanpause") wifimgr::pauseLan((rest.toInt() > 0 ? rest.toInt() : 120) * 1000UL);
+    else if (cmd == "kick") wifimgr::kickRabbit((rest.toInt() > 0 ? rest.toInt() : 30) * 1000UL);
     else if (cmd == "restart") ESP.restart();
     else if (cmd == "ears") {
         int l = -1, r = -1;

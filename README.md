@@ -43,6 +43,7 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 | Web app on iPad (touch: tap lights, drag ears) | **Physically tested** | Confirmed by the user on a real iPad |
 | Home Wi-Fi + `http://bunnyhop.local/` | **Physically tested** | Joined the user's network; page served over mDNS |
 | Rabbit network hidden + rabbit-only while home Wi-Fi is up | **Physically tested** | Rabbit followed the channel change and rejoined the hidden network in ~20-40 s |
+| Rabbit network public again when home Wi-Fi drops | **Physically tested** (bridge side) | Simulated outage (`lanpause`): network became visible/open, rabbit rejoined in 37 s; another device joining not yet confirmed |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
 | RFID tag reads | Protocol-verified | Bootcode calls `/vl/rfid.jsp?t=…`; **untested - no compatible tag available** (see below) |
@@ -82,12 +83,40 @@ pio run -t uploadfs      # web app, bootcode, sample audio (LittleFS)
    (e.g. `Nabaztag82DE00`). The rabbit joins, downloads the bootcode and logs in.
 5. Join that Wi-Fi network from any device and open **http://192.168.4.1/**.
    (Phones may show it as a captive portal; you can also open it in a browser.)
+6. Optionally put BunnyHop on your home Wi-Fi (see [Networks](#networks)).
 
 The network is **open** (no password) - the rabbit's 2005 Wi-Fi stack needs
 it. On later boots the bridge restores its AP and the rabbit reconnects by
 itself. If the rabbit doesn't appear for 3 minutes, the bridge rescans for a
 rabbit in setup mode every minute; "Find & pair rabbit" in the web app or
 `pair` on the serial console does it on demand.
+
+## Networks
+
+The ESP32 has one radio. It hosts **one** network - the rabbit's - and can at
+the same time join your **home Wi-Fi**:
+
+| | Home Wi-Fi connected | Home Wi-Fi not set or unreachable |
+|---|---|---|
+| Rabbit's network (`Nabaztag82DE00`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
+| Web app | `http://bunnyhop.local/` on your home network | `http://192.168.4.1/` on the rabbit's network |
+
+- Set home Wi-Fi in the web app: **Connection → Home Wi-Fi → Scan**, pick the
+  network, enter the password, **Save & connect**. The device you used is
+  disconnected from the rabbit's network once BunnyHop is online; rejoin your
+  home Wi-Fi and open `http://bunnyhop.local/`. **Forget** reverses this.
+- You never have to set home Wi-Fi: without it BunnyHop works entirely on the
+  rabbit's network.
+- If home Wi-Fi drops, the rabbit's network becomes public again at once and
+  BunnyHop retries every minute (each attempt is capped at 15 s, because a
+  searching ESP32 disturbs the rabbit's network). When it reconnects, other
+  devices are disconnected again.
+- The rabbit's network always uses the home Wi-Fi's channel. The rabbit follows
+  channel changes and finds the hidden network by itself (tested: ready again
+  within 20-40 s); if it ever gets stuck, the stale-session watchdog restarts it.
+- Online, BunnyHop also sets its clock from the internet and passes real time
+  to the rabbit.
+- Home Wi-Fi credentials are stored on the ESP32 in plain text (NVS).
 
 ## Using it
 
@@ -138,6 +167,7 @@ plus shortcuts - useful for experimenting without recompiling:
 status                      ears 4 12              led 2 #ff0000
 play /audio/hello.mp3       prog MU http://...\nMW  raw 7f0b000001 00ff
 pair | forget | kick [s]    diag [getrunningstate] dump /rec/rec0.wav
+lanpause [s]  (simulate a home Wi-Fi outage)
 {"cmd":"leds","colors":["#000","#f00","#0f0","#00f","#fff"]}
 {"cmd":"xmpp","xml":"<iq .../>"}      {"cmd":"tune","linger":300}
 ```
@@ -181,6 +211,8 @@ Rabbit-side protocol details, including the problems found and fixed, are in
 | Rabbit silent but "connected" | Volume wheel at zero. |
 | Rabbit connected to the AP but never logs in (after the bridge restarted) | It still believes its old XMPP session is alive. The bridge detects this after 30 s and switches the AP off for 30 s, which makes the rabbit reboot. Manually: `kick`. |
 | `pio run -t upload` can't find `/dev/ttyUSB0`, `dmesg` shows `can't set config #1, error -32` | The CP2104 failed USB enumeration. `echo 1 \| sudo tee /sys/bus/usb/devices/<port>/bConfigurationValue` (e.g. `2-4`), or replug. |
+| `bunnyhop.local` doesn't open | BunnyHop isn't on home Wi-Fi (check Connection on the rabbit's network), or the device doesn't support mDNS - use the IP shown under Connection. |
+| Can't join the rabbit's network | It's hidden and rabbit-only while BunnyHop is on home Wi-Fi - use `bunnyhop.local` instead. |
 | Web app shows "bridge offline" | You're not on the bridge's Wi-Fi, or the ESP32 restarted; the page reconnects automatically. |
 | Clicking the rabbit's button turns LEDs off | A click ends the running program, which includes an LED hold. The click is still reported as an event. |
 
@@ -199,7 +231,9 @@ Rabbit-side protocol details, including the problems found and fixed, are in
   downloads the whole resource before playing).
 - **No volume control** (hardware wheel only); **MP3/WAV only from the bridge**
   (the rabbit can't reach the internet).
-- **Open Wi-Fi network**: anyone in range can join and control the rabbit.
+- **Open Wi-Fi network** while home Wi-Fi isn't set or reachable: anyone in range
+  can join and control the rabbit. With home Wi-Fi it is hidden and rabbit-only,
+  but anyone on your home network can open `bunnyhop.local`.
 - **RFID not yet tested with a physical tag.** The reader (ST CRX14, to our
   knowledge) only sees ISO 14443-B ST tags (SRI512/SRIX4K family - Violet's
   Ztamps and Nano:ztags). Common MIFARE/NTAG (14443-A) cards and stickers are

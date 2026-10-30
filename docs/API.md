@@ -43,6 +43,8 @@ Every command may carry an `"id"`; the ack echoes it.
 | `audio` | - | `data`: list of audio files on the bridge |
 | `log` | - | `data`: recent log lines |
 | `time` | `epochMs` | set the bridge clock (served to the rabbit over NTP) |
+| `lan` | `ssid`, `password` (empty `ssid` = forget) | save home Wi-Fi and connect |
+| `lanScan` | - | scan for home networks; result arrives as a `lanScan` event |
 | `pair` | - | scan for a rabbit in setup mode and provision it |
 | `forget` | - | forget provisioning (rabbit, AP SSID) |
 | `tune` | `linger` (ms) | resource-server linger before close (default 300) |
@@ -88,6 +90,8 @@ Any later program (another LED command, audio, chor) or a button click ends it.
 | `pairing` | `step`, `ssid` / `ap` |
 | `scan` | `found` |
 | `diagnostics` | `node`, `fields` |
+| `lan` | `state` (`connected`/`unavailable`), `ip` |
+| `lanScan` | `networks`: `[{ssid, rssi, open}]` |
 | `log` | `cat`, `msg` |
 
 All events carry `t` (bridge uptime, ms).
@@ -105,6 +109,17 @@ All events carry `t` (bridge uptime, ms).
 `ears.left/right` are positions reported by the rabbit (-1 = none yet);
 `cmdLeft/cmdRight` and `leds` are what was last commanded (the rabbit can't
 report LED colours).
+
+### Wi-Fi status (`wifi` command)
+
+```json
+{"ap": "Nabaztag82DE00", "private": true, "apClients": 1, "rabbitSn": "0013d382de00",
+ "lan": {"ssid": "UniFi", "state": "connected", "ip": "192.168.1.71", "host": "bunnyhop.local"}, ...}
+```
+
+`lan.state`: `unset`, `connecting`, `connected`, `unavailable`. `private`: the
+rabbit's network is hidden and rabbit-only (home Wi-Fi is up). The password is
+never returned.
 
 ## REST
 
