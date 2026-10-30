@@ -279,3 +279,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 24.
 
 > the chime is fine
+
+## 25.
+
+> you didn't make the esp32 flasher as a git action

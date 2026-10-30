@@ -60,6 +60,23 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 
 ## Install
 
+### From the browser
+
+The **Build firmware and web flasher** GitHub Action builds the firmware and
+the LittleFS image on every push to `main` and makes a web flasher
+([ESP Web Tools](https://esphome.github.io/esp-web-tools/)): Chrome or Edge,
+**Connect**, pick the ESP32's serial port, install. The parts are flashed at
+their own offsets, so the NVS partition (rabbit pairing, home Wi-Fi) survives
+unless you tick **Erase device**.
+
+The flasher is deployed to GitHub Pages once the repository is public (Pages
+isn't available for this private repo). Until then, download the
+`bunnyhop-firmware` artifact from the latest run under **Actions**, and serve
+it locally (`python3 -m http.server` in the unzipped folder, open
+`http://localhost:8000/` - Web Serial allows `localhost` without HTTPS).
+
+### With PlatformIO
+
 Requires [PlatformIO](https://platformio.org/).
 
 ```sh

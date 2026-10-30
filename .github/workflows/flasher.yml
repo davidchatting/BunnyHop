@@ -1,0 +1,79 @@
+name: Build firmware and web flasher
+
+on:
+  push:
+    branches: [main]
+    paths: [firmware/**, flasher/**, .github/workflows/flasher.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: flasher
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('firmware/platformio.ini') }}
+      - run: pip install platformio
+      # Firmware (bootloader, partition table, app) and the LittleFS image
+      # (web app, bootcode, sample audio).
+      - run: pio run && pio run -t buildfs
+        working-directory: firmware
+      # Flash image parts at the offsets from partitions.csv. Parts are flashed
+      # separately (not merged) so NVS - the pairing and home Wi-Fi - survives.
+      - name: Assemble flasher site
+        run: |
+          B=firmware/.pio/build/featheresp32
+          cp -r flasher _site
+          cp $B/bootloader.bin $B/partitions.bin $B/firmware.bin $B/littlefs.bin _site/
+          cp ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin _site/
+          cat > _site/manifest.json <<JSON
+          {
+            "name": "BunnyHop",
+            "version": "${GITHUB_SHA::7}",
+            "new_install_prompt_erase": true,
+            "builds": [{
+              "chipFamily": "ESP32",
+              "parts": [
+                { "path": "bootloader.bin", "offset": 4096 },
+                { "path": "partitions.bin", "offset": 32768 },
+                { "path": "boot_app0.bin",  "offset": 57344 },
+                { "path": "firmware.bin",   "offset": 65536 },
+                { "path": "littlefs.bin",   "offset": 1900544 }
+              ]
+            }]
+          }
+          JSON
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bunnyhop-firmware
+          path: _site
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  # GitHub Pages needs a public repo on this account's plan; until then the
+  # binaries are only available as the workflow artifact above.
+  deploy:
+    needs: build
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
