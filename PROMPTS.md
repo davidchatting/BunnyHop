@@ -271,3 +271,11 @@ Clarifying answers are included where they changed the direction of the work.
 > works great - but there is no text i the save wifi creditals button?
 
 (Home Wi-Fi confirmed working; the button text was invisible in iPad dark mode.)
+
+## 23.
+
+> ok summarise progress and raise any issues, git push and sort github
+
+## 24.
+
+> the chime is fine

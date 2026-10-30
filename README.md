@@ -37,7 +37,7 @@ original, unmodified bootcode, exactly as Violet's servers once did.
 | Ears: left/right positioning, independent | **Physically tested** | Camera |
 | LEDs: 5 LEDs, any RGB colour, held until changed | **Physically tested** | Camera, 24/24 colour-tracked trials |
 | Choreographies (timed LED + ear sequences) | **Physically tested** | Camera |
-| Audio playback (MP3 from the bridge) | **Physically tested** | Camera microphone |
+| Audio playback (MP3 from the bridge) | **Physically tested** | Camera microphone; Big Ben chime confirmed by ear |
 | Button: single and double click | **Physically tested** | Events received while pressing |
 | Microphone: long-press recording | **Physically tested** | 2.6 s IMA ADPCM recording received, decoded |
 | Web app on iPad (touch: tap lights, drag ears) | **Physically tested** | Confirmed by the user on a real iPad |
