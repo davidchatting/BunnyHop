@@ -17,6 +17,13 @@ from websockets.http11 import Response
 from websockets.datastructures import Headers
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "firmware", "data", "www")
+AUDIO = os.path.join(os.path.dirname(__file__), "..", "firmware", "data", "audio")
+
+
+def audio_list():
+    """The sample sounds, listed as the bridge's /api/audio does."""
+    return [{"name": n, "url": "/audio/" + n, "bytes": os.path.getsize(os.path.join(AUDIO, n))}
+            for n in sorted(os.listdir(AUDIO))] if os.path.isdir(AUDIO) else []
 T0 = time.time()
 clients = set()
 state = {
@@ -59,11 +66,12 @@ async def execute(c):
     elif cmd == "log":
         r["data"] = log
     elif cmd == "audio":
-        r["data"] = []
+        r["data"] = audio_list()
     elif cmd == "ears":
         for k, sk in (("left", "cmdLeft"), ("right", "cmdRight")):
             if c.get(k, -1) >= 0:
                 state["ears"][sk] = c[k]
+                state["ears"][k] = c[k]      # the simulated rabbit gets there at once
     elif cmd == "led":
         ids = range(5) if c.get("led", -1) < 0 else [c["led"]]
         for i in ids:
@@ -77,6 +85,8 @@ async def execute(c):
     else:
         r.update(ok=False, error=f"unknown cmd '{cmd}'")
     await add_log("cmd", f"{cmd} {json.dumps({k: v for k, v in c.items() if k not in ('cmd', 'id')})}")
+    if cmd in ("ears", "led", "leds", "sleep", "wake"):
+        await broadcast({"type": "state", "t": ms(), "state": state})  # as the real bridge does
     return r
 
 
@@ -99,7 +109,7 @@ def http(connection, request):
     if path == "/ws":
         return None  # websocket upgrade
     if path == "/api/audio":
-        body, ctype = b"[]", "application/json"
+        body, ctype = json.dumps(audio_list()).encode(), "application/json"
     else:
         f = os.path.normpath(os.path.join(ROOT, path.lstrip("/") or "index.html"))
         if not f.startswith(os.path.normpath(ROOT)):

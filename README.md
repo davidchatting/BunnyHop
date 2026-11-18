@@ -1,7 +1,7 @@
 # <img src="docs/rabbit.svg" alt="" height="56"> BunnyHop
 
 BunnyHop brings a **Nabaztag:tag** - the Wi-Fi rabbit Violet made in 2006 -
-back to life with no internet and no cloud servers. A small ESP32 board sets the
+back to life with no internet and no cloud servers. An inexpensive ESP32 board sets the
 rabbit up, gives it its own Wi-Fi network and talks to it in its original
 language. You control the rabbit from a web page on any phone, tablet or
 computer, or from your own code.
@@ -34,6 +34,8 @@ program, just as Violet's servers once did.
 and how the networks work.
 
 ## Ways to use it
+
+<img src="docs/web-app.png" alt="The BunnyHop web app on a phone: the rabbit drawing with lights glowing, one ear forward and one going back, sounds and activity below" width="280" align="right">
 
 - **The web app.** A live drawing of the rabbit that is also its remote
   control: tap a light to change its colour, drag an ear to move it, play
@@ -87,9 +89,8 @@ limitations, and open problems are in the
 
 ## Author
 
-BunnyHop is by **David Chatting**, who also drew the rabbit. It was built with
-Claude Code using the Claude Opus 5.5 model (`claude-opus-5-5`); the prompts
-are logged in [PROMPTS.md](PROMPTS.md).
+BunnyHop is by **David Chatting**. It was built with Claude Code using
+Claude Opus 5.5; the prompts are logged in [PROMPTS.md](PROMPTS.md).
 
 ## Credits
 
@@ -108,10 +109,6 @@ This project stands on years of community reverse-engineering:
   (no licence stated). Used as a reference for the bootcode's internals (same
   bytecode revision, 21029); no code copied, and its replacement firmware is
   *not* used.
-- **BunnyHop-old** (an earlier experiment that first used the BunnyHop name) and
-  **nabaztag-controller** - earlier experiments with this same rabbit. Their
-  notes on 802.11b-only radios and the boot sequence saved a lot of time (one
-  of BunnyHop-old's conclusions - a `b=` port field - turned out to be wrong).
 - **ESPAsyncWebServer** and **AsyncTCP** (ESP32Async) - https://github.com/ESP32Async (LGPL-3.0).
 - **ArduinoJson** by Benoît Blanchon - https://arduinojson.org (MIT).
 - **Arduino-ESP32** / ESP-IDF (Espressif, Apache-2.0) and LittleFS.

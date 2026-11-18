@@ -160,7 +160,7 @@ Clarifying answers are included where they changed the direction of the work.
 
 **Clarifications (Claude's questions, the user's answers):**
 - Brief says V1, but RFID/microphone are V2 features and the rabbit was earlier identified as V2 - which? -> "it's a nabaztagtag" (Nabaztag:tag, V2)
-- New repo, or continue the earlier BunnyHop experiment? -> "New repo from scratch" (that earlier experiment is now BunnyHop-old; this project later took the BunnyHop name)
+- New repo, or continue the earlier BunnyHop experiment? -> "New repo from scratch"
 
 ## 2.
 
@@ -240,7 +240,7 @@ Clarifying answers are included where they changed the direction of the work.
 
 > this project and repo should now be called BunnyHop update everytthing
 
-(Renamed from nabaztag-bridge. The earlier, unrelated BunnyHop experiment had already been renamed BunnyHop-old.)
+(Renamed from nabaztag-bridge.)
 
 ## 18.
 
@@ -385,3 +385,11 @@ Clarifying answers are included where they changed the direction of the work.
 ## 50.
 
 > can the svg go in the title text?
+
+## 51.
+
+> remove references to BunnyHop-old. don't need to add authshio for my drawing. don't double cite claude-opus-5-5. include screen shot of web app
+
+## 52.
+
+> say inexpensive rather than small esp32
