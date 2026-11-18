@@ -369,3 +369,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 46.
 
 > should say waht clude model was used
+
+## 47.
+
+> rabbit image with only a red nose, no other leds
