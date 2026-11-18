@@ -91,7 +91,7 @@ limitations, and open problems are in the
 
 ## Author
 
-BunnyHop is by **[David Chatting](https://davidchatting.com/)**. It was built with Claude Code using
+BunnyHop is by **[David Chatting](https://github.com/davidchatting)**. It was built with Claude Code using
 Claude Opus 5.5; the prompts are logged in [PROMPTS.md](PROMPTS.md).
 
 ## Credits
