@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Build the web app's rabbit drawing from network-actions-rabbits.pdf.
+
+    python3 tools/rabbit_from_pdf.py network-actions-rabbits.pdf
+
+Lifts the rabbit's vector paths from the PDF (page 1 upright; page 3 right ear
+and page 5 left ear flopped), works out each ear's pivot and drawn angle, and
+writes firmware/data/www/js/rabbit-drawing.js from tools/rabbit-drawing.tpl.js.
+Needs PyMuPDF and numpy.
+"""
+import fitz, sys, json, os, numpy as np
+HERE = os.path.dirname(os.path.abspath(__file__))
+doc = fitz.open(sys.argv[1])
+out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, '..', 'firmware', 'data', 'www', 'js', 'rabbit-drawing.js')
+IDX={1:dict(body=4,mouth=5,eyeA=6,eyeB=7,earL=8,earR=9),
+     3:dict(body=4,earR=9),5:dict(body=8,earL=12)}
+D={pg:{k:doc[pg-1].get_drawings()[i] for k,i in m.items()} for pg,m in IDX.items()}
+def flat(d):  # list of (op, [pts])
+    return [(it[0],[(p.x,p.y) for p in it[1:] if hasattr(p,'x')]) for it in d['items']]
+def P(d): return np.array([q for _,ps in flat(d) for q in ps])
+def fit(A,B):
+    ca,cb=A.mean(0),B.mean(0); U,S,Vt=np.linalg.svd((A-ca).T@(B-cb)); R=Vt.T@U.T
+    if np.linalg.det(R)<0: Vt[-1]*=-1; R=Vt.T@U.T
+    return R,cb-R@ca
+def rot(X,ang,piv):
+    c,s=np.cos(ang),np.sin(ang); R=np.array([[c,-s],[s,c]]); return (X-piv)@R.T+piv
+base={k:flat(v) for k,v in D[1].items()}
+for k in ('earL','earR'):
+    assert set(o for o,_ in flat(D[1][k]))=={'c'}==set(o for o,_ in flat(D[3 if k=='earR' else 5][k]))
+ears={}
+for k,pg in (('earR',3),('earL',5)):
+    _,bt=fit(P(D[1]['body']),P(D[pg]['body']))
+    A=P(D[1][k]); B=P(D[pg][k])-bt
+    R,t=fit(A,B); ang=np.arctan2(R[1,0],R[0,0]); piv=np.linalg.solve(np.eye(2)-R,t)
+    local=rot(B,-ang,piv)            # drawn pose, un-rotated about pivot
+    # The drawn poses trace the outline the other way round and from another
+    # start point (the page 3 ear is a mirror image). Reorder (direction +
+    # cyclic start) to keep the ear as wide as possible through the morph; otherwise the morph squashes the ear flat
+    # midway. All segments are closed-loop cubics: the drawing is unchanged.
+    segs=local.reshape(-1,4,2); best=None
+    for rev in (False,True):
+        sb=segs[::-1,::-1] if rev else segs
+        for sh in range(len(sb)):
+            C=np.roll(sb,sh,axis=0).reshape(-1,2)
+            e=-min(np.ptp((A+m*(C-A))[:,0]) for m in np.linspace(0,1,21))  # keep the ear widest through the morph
+            if best is None or e<best[0]: best=(e,C,rev,sh)
+    local=best[1]; print(k,'reversed',best[2],'shift',best[3])
+    # For the in-between frames: both outlines resampled to N points evenly
+    # spaced along the outline, paired up (direction + start) to keep the ear
+    # as wide as possible, then drawn as one smooth closed curve. Blending
+    # Bezier control points instead leaves kinks where segments meet.
+    def sample(X, n=120):
+        segs=X.reshape(-1,4,2); ts=np.linspace(0,1,40,endpoint=False)
+        pts=np.concatenate([((1-t)**3)[:,None]*p0+(3*(1-t)**2*t)[:,None]*p1+(3*(1-t)*t*t)[:,None]*p2+(t**3)[:,None]*p3
+                            for p0,p1,p2,p3 in segs for t in [ts]])
+        loop=np.vstack([pts,pts[:1]]); d=np.r_[0,np.cumsum(np.linalg.norm(np.diff(loop,axis=0),axis=1))]
+        u=np.linspace(0,d[-1],n,endpoint=False)
+        return np.c_[np.interp(u,d,loop[:,0]),np.interp(u,d,loop[:,1])]
+    SA=sample(A); SB=sample(local); best=None
+    for rev in (False,True):
+        sb=SB[::-1] if rev else SB
+        for sh in range(len(sb)):
+            C=np.roll(sb,sh,axis=0)
+            e=np.linalg.norm((SA-SA.mean(0))-(C-C.mean(0)),axis=1).sum()
+            if best is None or e<best[0]: best=(e,C)
+    SB=best[1]
+    print(k,'min width through morph',round(min(np.ptp((SA+m*(SB-SA))[:,0]) for m in np.linspace(0,1,21)),2))
+    sign=-1 if k=='earR' else 1
+    ears['right' if k=='earR' else 'left']=dict(
+        ops=[o for o,_ in flat(D[1][k])], up=A.round(3).tolist(), drawnLocal=local.round(3).tolist(),
+        pivot=piv.round(3).tolist(), upS=SA.round(3).tolist(), drawnS=SB.round(3).tolist(), drawnAngle=round(float(np.degrees(ang))*sign,1), sign=sign)
+def path(fl):
+    s=[];cur=None
+    for op,ps in fl:
+        if op=='l':
+            if cur!=ps[0]: s.append('M%.3f %.3f'%ps[0])
+            s.append('L%.3f %.3f'%ps[1]); cur=ps[1]
+        elif op=='c':
+            if cur!=ps[0]: s.append('M%.3f %.3f'%ps[0])
+            s.append('C'+' '.join('%.3f %.3f'%p for p in ps[1:])); cur=ps[3]
+    return ''.join(s)+('Z' if 0 else '')
+shapes=dict(body=path(base['body']),eyes=path(base['eyeA'])+'Z'+path(base['eyeB'])+'Z',mouth=path(base['mouth'])+'Z')
+data = json.dumps(dict(shapes=shapes, ears=ears), separators=(',', ':'))
+tpl = open(os.path.join(HERE, 'rabbit-drawing.tpl.js')).read()
+open(out, 'w').write('// SPDX-License-Identifier: GPL-2.0-or-later\n'
+                     '// Generated by tools/rabbit_from_pdf.py from tools/rabbit-drawing.tpl.js - edit those.\n'
+                     + tpl.replace('__DATA__', data))
+print({k:(v['pivot'],v['drawnAngle']) for k,v in ears.items()})

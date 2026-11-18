@@ -1,194 +1,137 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * sketch.js - main entry: connects to the bridge, starts the UI modules and
- * draws the rabbit (p5.js), which is also the main control:
+ * draws the rabbit (js/rabbit-drawing.js, an SVG), which is also the main control:
  *   tap a light  -> colour picker for that LED
  *   drag an ear  -> moves that ear
  * The drawing faces you, so the rabbit's left is on the right of the screen.
+ * While the rabbit isn't connected it is drawn as a dashed ghost, lights off.
+ *
+ * Ear positions 0-16 are one full turn: 0 up, 0-8 swinging forward out to the
+ * drawing's flopped pose, 8-16 coming back up the back way (shown with grey
+ * depth). In the drawing that is a value -90 (back) .. 0 (up) .. 90 (forward).
  */
 const rabbit = new RabbitClient();
 Events.init(rabbit);
 Controls.init(rabbit);
 
-new p5((p) => {
-  const W = 360, H = 420;
-  // LED order: bottom, left, middle, right, nose (rabbit's own left/right)
-  const LED_POS = [[180, 392], [232, 300], [180, 306], [128, 300], [180, 186]];
-  const EAR_PIVOT = [[212, 140], [148, 140]];  // rabbit's left, right
-  const EAR_LEN = 120;
-  const target = [0, 0];   // ear positions 0..16 to show
-  const shown = [0, 0];    // eased
+(() => {
+  const SIDES = ['left', 'right'];
+  const view = document.getElementById('rabbit-view');
+  const drawing = createRabbit(view, { ink: '#2b2a27', paper: '#fffdf8' });
+  const svg = drawing.svg;
+
+  const target = { left: 0, right: 0 };   // ear positions 0..16 to show
+  const shown = { left: 0, right: 0 };    // eased, same scale
   let leds = ['#000000', '#000000', '#000000', '#000000', '#000000'];
-  let dragging = -1;
-  let localUntil = 0;      // ignore bridge ear state briefly after our own drag
+  let dragging = null;                    // { side, back } while dragging an ear
+  let localUntil = 0;                     // ignore bridge ear state briefly after our own drag
 
-  // 0 = up, 8 = horizontal (outwards), 16 = down - as seen on the real rabbit
-  const earAngle = (i, pos) => (i === 0 ? 1 : -1) * (pos / 16) * Math.PI;
-
-  function earTip(i, pos) {
-    const [x, y] = EAR_PIVOT[i];
-    const a = earAngle(i, pos);
-    return [x + Math.sin(a) * EAR_LEN, y - Math.cos(a) * EAR_LEN];
-  }
+  // Position 0..16 -> drawing value: 0..8 forward 0..90, 8..16 back 90..0.
+  const toValue = (pos) => (pos <= 8 ? (pos / 8) * 90 : -((16 - pos) / 8) * 90);
 
   function fromState(s) {
     if (!s) return;
     const e = s.ears || {};
-    if (dragging < 0 && Date.now() > localUntil) {
-      target[0] = e.left >= 0 ? e.left : Math.max(0, e.cmdLeft);
-      target[1] = e.right >= 0 ? e.right : Math.max(0, e.cmdRight);
+    if (!dragging && Date.now() > localUntil) {
+      target.left = e.left >= 0 ? e.left : Math.max(0, e.cmdLeft);
+      target.right = e.right >= 0 ? e.right : Math.max(0, e.cmdRight);
     }
     if (s.leds) leds = s.leds.slice();
   }
+  rabbit.on('hello', (m) => fromState(m.state));
+  rabbit.on('state', (m) => fromState(m.state));
+  rabbit.on('ears', (m) => { if (!dragging) { target.left = m.left; target.right = m.right; } });
 
-  p.setup = () => {
-    p.createCanvas(W, H).parent('rabbit-view');
-    attachInput();
-    rabbit.on('hello', (m) => fromState(m.state));
-    rabbit.on('state', (m) => fromState(m.state));
-    rabbit.on('ears', (m) => { if (dragging < 0) { target[0] = m.left; target[1] = m.right; } });
-  };
-
-  function drawEar(i) {
-    const [x, y] = EAR_PIVOT[i];
-    p.push();
-    p.translate(x, y);
-    p.rotate(earAngle(i, shown[i]));
-    p.stroke(205);
-    p.strokeWeight(2);
-    p.fill(dragging === i ? '#fff1e6' : 255);
-    p.rect(-18, -EAR_LEN, 36, EAR_LEN + 12, 18);
-    p.noStroke();
-    p.fill(246, 224, 218);
-    p.rect(-8, -EAR_LEN + 14, 16, EAR_LEN - 28, 8);
-    p.pop();
+  // Positions wrap (16 is up again, like 0), so ease the short way round.
+  function ease(side) {
+    let d = target[side] - shown[side];
+    if (d > 8) d -= 16; else if (d < -8) d += 16;
+    shown[side] = Math.abs(d) < 0.01 ? target[side] : (shown[side] + d * 0.2 + 16) % 16;
+    if (target[side] === 16 && shown[side] < 0.01) shown[side] = 16;
   }
 
-  p.draw = () => {
+  let wasLive = null, shownLeds = '';
+  function frame() {
     const live = rabbit.rabbitConnected;
-    p.clear();
-    for (let i = 0; i < 2; i++) shown[i] += (target[i] - shown[i]) * 0.2;
-    drawEar(0);
-    drawEar(1);
+    if (live !== wasLive) { drawing.setGhost(!live); wasLive = live; }
+    const want = live ? leds : ['', '', '', '', ''];
+    if (want.join() !== shownLeds) { drawing.setLeds(want); shownLeds = want.join(); }
+    SIDES.forEach(ease);
+    drawing.setEars({ left: toValue(shown.left), right: toValue(shown.right) });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 
-    // body
-    p.stroke(210);
-    p.strokeWeight(2);
-    p.fill(255);
-    p.beginShape();
-    p.vertex(122, 150);
-    p.bezierVertex(62, 280, 72, 380, 72, 400);
-    p.vertex(288, 400);
-    p.bezierVertex(288, 380, 298, 280, 238, 150);
-    p.bezierVertex(218, 112, 142, 112, 122, 150);
-    p.endShape(p.CLOSE);
+  // ---- input (native Pointer Events: finger, pencil and mouse alike) ----
 
-    // eyes and the button mark
-    p.noStroke();
-    p.fill(40);
-    p.ellipse(158, 168, 9, 13);
-    p.ellipse(202, 168, 9, 13);
-    p.ellipse(180, 352, 6, 14);
+  function svgPoint(e) {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
 
-    // lights
-    LED_POS.forEach(([x, y], i) => {
-      const c = p.color(leds[i] || '#000000');
-      const lit = p.red(c) + p.green(c) + p.blue(c) > 30;
-      p.noStroke();
-      if (lit) {
-        for (let r = 52; r > 26; r -= 6) {
-          c.setAlpha(28);
-          p.fill(c);
-          p.circle(x, y, r);
-        }
-        c.setAlpha(255);
-      }
-      p.fill(lit ? c : p.color(238));
-      p.stroke(lit ? 255 : 205);
-      p.strokeWeight(1.5);
-      p.circle(x, y, i === 0 ? 30 : 26);
-    });
+  function hitLed(p) {
+    return LEDS.findIndex(([x, y, r]) => Math.hypot(p.x - x, p.y - y) < r * 2.4);
+  }
 
-    if (!live) {
-      p.noStroke();
-      p.fill(244, 241, 234, 170);
-      p.rect(0, 0, W, H);
-    }
+  function hitEar(e) {
+    const g = e.target.closest && e.target.closest('#ear-left, #ear-right');
+    return g ? g.id.slice(4) : null;
+  }
+
+  // How far out the pointer is from the ear's pivot, 0 (up) .. 8 (drawn pose).
+  function outFromPointer(side, p) {
+    const ear = RABBIT.ears[side];
+    const [px, py] = ear.pivot;
+    let a = (Math.atan2(ear.sign * (p.x - px), -(p.y - py)) * 180) / Math.PI;
+    a = Math.min(Math.max(a, 0), ear.drawnAngle);
+    return (a / ear.drawnAngle) * 8;
+  }
+
+  svg.style.touchAction = 'none';
+  svg.addEventListener('pointerdown', (e) => {
+    if (!rabbit.rabbitConnected) return;
+    const side = hitEar(e);
+    if (!side) return;
+    // Keep going the way the ear already is; swinging all the way out flips
+    // between the forward half (0-8) and the back half (8-16) of the turn.
+    dragging = { side, back: target[side] > 8 };
+    svg.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const { side } = dragging;
+    const out = outFromPointer(side, svgPoint(e));
+    if (out >= 7.5) dragging.flip = true;
+    else if (dragging.flip && out < 7) { dragging.back = !dragging.back; dragging.flip = false; }
+    const pos = Math.round(dragging.back ? 16 - out : out);
+    if (pos === target[side]) return;
+    target[side] = pos;
+    if (side === 'left') rabbit.ears(pos, null, { throttle: true });
+    else rabbit.ears(null, pos, { throttle: true });
+    e.preventDefault();
+  });
+  const endDrag = () => {
+    if (!dragging) return;
+    const { side } = dragging;
+    dragging = null;
+    const pos = target[side];
+    localUntil = Date.now() + 2500;
+    (side === 'left' ? rabbit.ears(pos, null) : rabbit.ears(null, pos)).catch(() => {});
   };
+  svg.addEventListener('pointerup', endDrag);
+  svg.addEventListener('pointercancel', endDrag);
 
-  function hitLed(x, y) {
-    return LED_POS.findIndex(([lx, ly]) => p.dist(x, y, lx, ly) < 22);
-  }
-
-  // distance from the pointer to the ear's centre line
-  function hitEar(x, y) {
-    let best = -1, bestD = 26;
-    for (let i = 0; i < 2; i++) {
-      const [ax, ay] = EAR_PIVOT[i];
-      const [bx, by] = earTip(i, shown[i]);
-      const t = p.constrain(((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / (EAR_LEN * EAR_LEN), 0, 1);
-      const d = p.dist(x, y, ax + t * (bx - ax), ay + t * (by - ay));
-      if (d < bestD) { best = i; bestD = d; }
-    }
-    return best;
-  }
-
-  function earFromPointer(i, x, y) {
-    const [ax, ay] = EAR_PIVOT[i];
-    const outward = (i === 0 ? 1 : -1) * (x - ax);
-    let a = Math.atan2(outward, -(y - ay));     // 0 = up, PI/2 = outwards
-    if (a < 0) a = 0;                           // can't go past upright inwards
-    return Math.round(p.constrain((a / Math.PI) * 16, 0, 16));
-  }
-
-  // Input uses native Pointer Events (finger, pencil and mouse alike) rather
-  // than p5's mouse/touch mapping, which doesn't fire on iPad Safari.
-  function canvasPoint(e) {
-    const r = p.canvas.getBoundingClientRect();
-    return [((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height];
-  }
-
-  function attachInput() {
-    const c = p.canvas;
-    c.addEventListener('pointerdown', (e) => {
-      if (!rabbit.rabbitConnected) return;
-      const [x, y] = canvasPoint(e);
-      if (hitLed(x, y) >= 0) return;  // handled on click
-      dragging = hitEar(x, y);
-      if (dragging >= 0) {
-        c.setPointerCapture(e.pointerId);
-        e.preventDefault();
-      }
-    });
-    c.addEventListener('pointermove', (e) => {
-      if (dragging < 0) return;
-      const [x, y] = canvasPoint(e);
-      const pos = earFromPointer(dragging, x, y);
-      target[dragging] = pos;
-      if (dragging === 0) rabbit.ears(pos, null, { throttle: true });
-      else rabbit.ears(null, pos, { throttle: true });
-      e.preventDefault();
-    });
-    const endDrag = () => {
-      if (dragging < 0) return;
-      const i = dragging;
-      dragging = -1;
-      const pos = target[i];
-      localUntil = Date.now() + 2500;
-      (i === 0 ? rabbit.ears(pos, null) : rabbit.ears(null, pos)).catch(() => {});
-    };
-    c.addEventListener('pointerup', endDrag);
-    c.addEventListener('pointercancel', endDrag);
-    c.addEventListener('click', (e) => {
-      if (!rabbit.rabbitConnected) return;
-      const [x, y] = canvasPoint(e);
-      const led = hitLed(x, y);
-      if (led >= 0) {
-        const r = p.canvas.getBoundingClientRect();
-        const [lx, ly] = LED_POS[led];
-        Controls.pickLedColor(led, leds[led], window.scrollX + r.left + (lx * r.width) / W,
-          window.scrollY + r.top + (ly * r.height) / H);
-      }
-    });
-  }
-}, document.getElementById('rabbit-view'));
+  svg.addEventListener('click', (e) => {
+    if (!rabbit.rabbitConnected) return;
+    const led = hitLed(svgPoint(e));
+    if (led < 0) return;
+    const [x, y] = LEDS[led];
+    const pt = svg.createSVGPoint();
+    pt.x = x; pt.y = y;
+    const s = pt.matrixTransform(svg.getScreenCTM());
+    Controls.pickLedColor(led, leds[led], window.scrollX + s.x, window.scrollY + s.y);
+  });
+})();

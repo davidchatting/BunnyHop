@@ -283,3 +283,77 @@ Clarifying answers are included where they changed the direction of the work.
 ## 25.
 
 > you didn't make the esp32 flasher as a git action
+
+(Prompts 26-43 developed the rabbit drawing from `network-actions-rabbits.pdf`, a set of 2018 diagrams, as a separate prototype before it went into the web app.)
+
+## 26.
+
+> can you see the new pdf? can you extract the rabite character and structure it so the ears can be moved like in the different views in the document?
+
+## 27.
+
+> the ears don't move correctly yet, they are constrained to occupy the 90 degree angle point outwards, they can point forward and back as they rotate
+
+## 28.
+
+> just want one control per ear, suggust a simple 0 - 90 animation, where cross hatching is faded in to show depth when going back
+
+## 29.
+
+> also place the LEDS
+
+## 30.
+
+> nice but no hard edges on the leds, also bottom led should be the bottom edge
+
+## 31.
+
+> bottom edge should mask the led, also needs to be wider. use a grey smudge fill instead of crosshatch, so thjat it match es the style of the leds
+
+## 32.
+
+> grey represents depth so at 90 dgrees it'll be back at starting depth. also mask the bottom led the other way
+
+## 33.
+
+> move the bottom led up a bit so it better floows the edge and remove the hard centre. explain how the ear rotation works. far way grey is too dark
+
+## 34.
+
+> the 45 degree ears have some peaks, not smooth curves
+
+## 35.
+
+> shapes are now very good draw ears infront (in terms of z) of the body
+
+## 36.
+
+> right ear at 90 degrees should match the example, not go to the exact angle
+
+## 37.
+
+> slightly highere wit the bottom led
+
+## 38.
+
+> that's good we can work wit this
+
+## 39.
+
+> make the nose led slightly lower down
+
+## 40.
+
+> bit more and the chest leds can go down by a unit of their height
+
+## 41.
+
+> put this rabbit in the BunnyHop web app
+
+## 42.
+
+> (Answer to how ear positions 0-16 map onto the drawing:) Full turn, fwd then back
+
+## 43.
+
+> if the rabbit is not connected, use the ghost outline and turn all the leds off
