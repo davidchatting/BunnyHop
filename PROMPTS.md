@@ -1,6 +1,7 @@
 # Prompt log
 
-Prompts given to Claude Code (Opus 5.5) while building this project, in order.
+Prompts given to Claude Code (Opus 5.5) that changed the code, in order.
+Questions, confirmations and documentation-only requests are left out.
 Clarifying answers are included where they changed the direction of the work.
 
 ---
@@ -164,85 +165,41 @@ Clarifying answers are included where they changed the direction of the work.
 
 ## 2.
 
-> try the esp32 now
-
-(The ESP32's USB-serial bridge had failed USB enumeration; it was recovered from software - see docs/TROUBLESHOOTING.md.)
-
-## 3.
-
-> yes clear the unused packages, nabaztag-bridge is fine
-
-(Permission to free disk space by removing unused PlatformIO packages; repo name confirmed.)
-
-## 4.
-
-> it's in setup mode now, lights are blue
-
-## 5.
-
 > no it should restart automatically with the new details. this is a 2005 implementatiojn of wifi so check the network, names, etc are all within the old specs
 
 > it must be an open network
 
 (Led to: 802.11b-only AP, hyphen-free SSID, and finding that `b.htm` needs `z=Update+and+Start`.)
 
-## 6.
-
-> I turned the volume from off to max
-
-(The rabbit's volume wheel had been at zero, which is why audio programs were silent.)
-
-## 7.
-
-> do you have a real-time serial interafce to send messages without recompiling the esp32 code?
-
-(Yes - every API command can be sent as JSON over the USB serial console; see docs/USING.md, "Serial console".)
-
-## 8.
+## 3.
 
 > the camera isn't mirrored, pressing the button now
 
-## 9.
+## 4.
 
 > moved left ear
 
-## 10.
+(Checked against the camera: the rabbit reports ears from Violet's point of view, so incoming left and right were swapped in the firmware.)
 
-> moved right ear
-
-## 11.
-
-> look for rfid now
-
-> i don't think I have the right type
-
-## 12.
-
-> tell me about GPL-2
-
-## 13.
+## 5.
 
 > go with GPL-2.0-or-later for everything
 
-## 14.
-
-> push it to github as a private repo
-
-## 15.
+## 6.
 
 > can tyou test the webinteface?
 
-## 16.
+## 7.
 
 > the web inteface is much too much, sketch interface is unnecesary, commands makes no sense and the interactive rabbit doesn't seem to work
 
-## 17.
+## 8.
 
 > this project and repo should now be called BunnyHop update everytthing
 
 (Renamed from nabaztag-bridge.)
 
-## 18.
+## 9.
 
 > ok, assuming this esp32 can do this, I want to create two wireless networks, a private side that is open but mac address locked to the nabaztag and a public side that hosts the server and joins the local wifi network, if the credits for the public network are unset or the network is unavailable then it will be another self hosted network and captive portal. the webapp will allow the local network credentials to be set. once on the local network it should be discoverable as bunnyhop.local
 
@@ -250,146 +207,92 @@ Clarifying answers are included where they changed the direction of the work.
 
 > also private means open (no password) but not adevrtised
 
-## 19.
+## 10.
 
 > does the interactive rabbit work with touch events on ipad?
 
-## 20.
+## 11.
 
 > update the hello message to something more fun, also better chime, big ben? also ipad still doesn't seem to work?
 
 > no that message is not fun, just say Hello I'm nabaztag, that'll be fine
 
-## 21.
-
-> that works well
-
-(Confirmed on a real iPad: tapping lights and dragging ears.)
-
-## 22.
+## 12.
 
 > works great - but there is no text i the save wifi creditals button?
 
 (Home Wi-Fi confirmed working; the button text was invisible in iPad dark mode.)
 
-## 23.
-
-> ok summarise progress and raise any issues, git push and sort github
-
-## 24.
-
-> the chime is fine
-
-## 25.
+## 13.
 
 > you didn't make the esp32 flasher as a git action
 
-(Prompts 26-43 developed the rabbit drawing from `network-actions-rabbits.pdf`, a set of 2018 diagrams, as a separate prototype before it went into the web app.)
+(The next prompts developed the rabbit drawing as a separate prototype before it went into the web app.)
 
-## 26.
+## 14.
 
 > can you see the new pdf? can you extract the rabite character and structure it so the ears can be moved like in the different views in the document?
 
-## 27.
+## 15.
 
 > the ears don't move correctly yet, they are constrained to occupy the 90 degree angle point outwards, they can point forward and back as they rotate
 
-## 28.
+## 16.
 
 > just want one control per ear, suggust a simple 0 - 90 animation, where cross hatching is faded in to show depth when going back
 
-## 29.
+## 17.
 
 > also place the LEDS
 
-## 30.
+## 18.
 
 > nice but no hard edges on the leds, also bottom led should be the bottom edge
 
-## 31.
+## 19.
 
 > bottom edge should mask the led, also needs to be wider. use a grey smudge fill instead of crosshatch, so thjat it match es the style of the leds
 
-## 32.
+## 20.
 
 > grey represents depth so at 90 dgrees it'll be back at starting depth. also mask the bottom led the other way
 
-## 33.
+## 21.
 
 > move the bottom led up a bit so it better floows the edge and remove the hard centre. explain how the ear rotation works. far way grey is too dark
 
-## 34.
+## 22.
 
 > the 45 degree ears have some peaks, not smooth curves
 
-## 35.
+## 23.
 
 > shapes are now very good draw ears infront (in terms of z) of the body
 
-## 36.
+## 24.
 
 > right ear at 90 degrees should match the example, not go to the exact angle
 
-## 37.
+## 25.
 
 > slightly highere wit the bottom led
 
-## 38.
-
-> that's good we can work wit this
-
-## 39.
+## 26.
 
 > make the nose led slightly lower down
 
-## 40.
+## 27.
 
 > bit more and the chest leds can go down by a unit of their height
 
-## 41.
+## 28.
 
 > put this rabbit in the BunnyHop web app
 
-## 42.
+## 29.
 
 > (Answer to how ear positions 0-16 map onto the drawing:) Full turn, fwd then back
 
-## 43.
+## 30.
 
 > if the rabbit is not connected, use the ghost outline and turn all the leds off
-
-## 44.
-
-> suggest a new readme structure where the top readme page simply describes the project and ways to use it, authors and licenses there too
-
-## 45.
-
-> David Chatting is the author and illustrated the rabbit, I don't need the pdf in the repo, we don't need to worry about where that comes from
-
-## 46.
-
-> should say waht clude model was used
-
-## 47.
-
-> rabbit image with only a red nose, no other leds
-
-## 48.
-
-> highlevel setup instructions need to include how to put tit on thyour local home network
-
-## 49.
-
-> green led on image
-
-## 50.
-
-> can the svg go in the title text?
-
-## 51.
-
-> remove references to BunnyHop-old. don't need to add authshio for my drawing. don't double cite claude-opus-5-5. include screen shot of web app
-
-## 52.
-
-> say inexpensive rather than small esp32
