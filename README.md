@@ -1,6 +1,4 @@
-# BunnyHop
-
-<img src="docs/rabbit.svg" alt="The BunnyHop rabbit, one ear flopped, green nose glowing" width="200" align="right">
+# <img src="docs/rabbit.svg" alt="" height="56"> BunnyHop
 
 BunnyHop brings a **Nabaztag:tag** - the Wi-Fi rabbit Violet made in 2006 -
 back to life with no internet and no cloud servers. A small ESP32 board sets the

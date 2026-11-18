@@ -381,3 +381,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 49.
 
 > green led on image
+
+## 50.
+
+> can the svg go in the title text?
