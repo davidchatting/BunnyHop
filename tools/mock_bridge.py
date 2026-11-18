@@ -151,7 +151,10 @@ async def simulate():
 async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--offline", action="store_true", help="act as if the rabbit isn't connected")
     a = ap.parse_args()
+    if a.offline:
+        state.update(connected=False, phase="idle")
     async with serve(handler, "0.0.0.0", a.port, process_request=http):
         print(f"mock bridge on http://localhost:{a.port}/")
         await simulate()

@@ -52,7 +52,7 @@ function earPath(ear, value) {
 
 // Builds the rabbit inside `container`. Returns { svg, setEars({left, right}), setLeds([5 colours]), setLed(i, colour), setGhost(bool) }.
 // A colour of null, '' or black turns that LED off. Each LED has a thin grey
-// circle as a tap target; pass { targets: false } to leave them out.
+// circle as a tap target (hidden on the ghost); pass { targets: false } to leave them out.
 function createRabbit(container, { ink = '#000', paper = '#fff', target = '#a8a59d', targets = true } = {}) {
   const svg = document.createElementNS(SVGNS, 'svg');
   svg.setAttribute('viewBox', '-10 22 31 33');
@@ -121,8 +121,9 @@ function createRabbit(container, { ink = '#000', paper = '#fff', target = '#a8a5
   });
   head.append(ledGroup, bodyLine, face);
   // Tap targets: a grey ring round each LED, over the face so the nose ring shows.
+  let rings = null;
   if (targets) {
-    const rings = el('g', { id: 'led-targets', fill: 'none', stroke: target, 'stroke-width': 0.12, 'stroke-dasharray': 'none', 'pointer-events': 'none' });
+    rings = el('g', { id: 'led-targets', fill: 'none', stroke: target, 'stroke-width': 0.12, 'stroke-dasharray': 'none', 'pointer-events': 'none' });
     LEDS.forEach(([x, y, r], i) => rings.append(el('circle', { id: 'target-' + LED_NAMES[i], cx: x, cy: y, r: r * 1.5 })));
     head.append(rings);
   }
@@ -149,7 +150,11 @@ function createRabbit(container, { ink = '#000', paper = '#fff', target = '#a8a5
     dot.setAttribute('opacity', off ? 0 : 0.95);
   }
   function setLeds(list) { list.forEach((c, i) => setLed(i, c)); }
-  function setGhost(on) { outline.setAttribute('stroke-dasharray', on ? '2 2' : 'none'); }
+  // The ghost (rabbit not connected) can't be tapped, so it has no targets.
+  function setGhost(on) {
+    outline.setAttribute('stroke-dasharray', on ? '2 2' : 'none');
+    if (rings) rings.setAttribute('visibility', on ? 'hidden' : 'visible');
+  }
   setEars({ left: 0, right: 0 });
   return { svg, setEars, setLed, setLeds, leds: ledColours, setGhost, pose, pivots: { left: RABBIT.ears.left.pivot, right: RABBIT.ears.right.pivot } };
 }

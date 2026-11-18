@@ -300,3 +300,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 31.
 
 > there needs to be a grey outlined circle as a target for each led in the webapp
+
+## 32.
+
+> when ghost no circles as no interaction possible,then show screenshot
