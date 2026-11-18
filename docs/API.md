@@ -6,7 +6,7 @@ One JSON command format is shared by three transports:
 |---|---|
 | WebSocket | `ws://192.168.4.1/ws` - send a command object, get an `ack`; events arrive unsolicited |
 | REST | `POST /api/cmd` with a command object as the body; reply is the ack (HTTP 409 if `ok` is false) |
-| Serial | one command object per line at 115200 baud (plus shortcuts, see README) |
+| Serial | one command object per line at 115200 baud (plus shortcuts, see [USING.md](USING.md#serial-console)) |
 
 The JavaScript wrapper `firmware/data/www/js/rabbit-api.js` (`RabbitClient`)
 covers all of this, with promises, reconnection and throttling.

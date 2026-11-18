@@ -166,7 +166,7 @@ Clarifying answers are included where they changed the direction of the work.
 
 > try the esp32 now
 
-(The ESP32's USB-serial bridge had failed USB enumeration; it was recovered from software - see README "Troubleshooting".)
+(The ESP32's USB-serial bridge had failed USB enumeration; it was recovered from software - see docs/TROUBLESHOOTING.md.)
 
 ## 3.
 
@@ -196,7 +196,7 @@ Clarifying answers are included where they changed the direction of the work.
 
 > do you have a real-time serial interafce to send messages without recompiling the esp32 code?
 
-(Yes - every API command can be sent as JSON over the USB serial console; see README "Serial console".)
+(Yes - every API command can be sent as JSON over the USB serial console; see docs/USING.md, "Serial console".)
 
 ## 8.
 
@@ -357,3 +357,11 @@ Clarifying answers are included where they changed the direction of the work.
 ## 43.
 
 > if the rabbit is not connected, use the ghost outline and turn all the leds off
+
+## 44.
+
+> suggest a new readme structure where the top readme page simply describes the project and ways to use it, authors and licenses there too
+
+## 45.
+
+> David Chatting is the author and illustrated the rabbit, I don't need the pdf in the repo, we don't need to worry about where that comes from

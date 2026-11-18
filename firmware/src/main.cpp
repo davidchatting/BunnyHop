@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Nabaztag:tag <-> ESP32 bridge
-// See README.md for architecture; docs/PROTOCOL.md for the rabbit side.
+// See docs/ARCHITECTURE.md for architecture; docs/PROTOCOL.md for the rabbit side.
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
