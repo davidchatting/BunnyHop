@@ -65,8 +65,8 @@ jobs:
         with:
           path: _site
 
-  # GitHub Pages needs a public repo on this account's plan; until then the
-  # binaries are only available as the workflow artifact above.
+  # Publishes the flasher to GitHub Pages (the repo must have Pages enabled,
+  # with GitHub Actions as the source). Private repos only get the artifact.
   deploy:
     needs: build
     if: ${{ !github.event.repository.private }}

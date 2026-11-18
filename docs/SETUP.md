@@ -11,18 +11,17 @@
 
 ### From the browser
 
-The **Build firmware and web flasher** GitHub Action builds the firmware and
-the LittleFS image on every push to `main` and makes a web flasher
-([ESP Web Tools](https://esphome.github.io/esp-web-tools/)): Chrome or Edge,
-**Connect**, pick the ESP32's serial port, install. The parts are flashed at
-their own offsets, so the NVS partition (rabbit pairing, home Wi-Fi) survives
-unless you tick **Erase device**.
+Open **https://davidchatting.com/BunnyHop/** in Chrome or Edge on a computer,
+plug in the ESP32, press **Connect**, pick its serial port and install. The
+parts are flashed at their own offsets, so the rabbit pairing and home Wi-Fi
+settings survive unless you tick **Erase device**.
 
-The flasher is deployed to GitHub Pages once the repository is public (Pages
-isn't available for this private repo). Until then, download the
-`bunnyhop-firmware` artifact from the latest run under **Actions**, and serve
-it locally (`python3 -m http.server` in the unzipped folder, open
-`http://localhost:8000/` - Web Serial allows `localhost` without HTTPS).
+The flasher ([ESP Web Tools](https://esphome.github.io/esp-web-tools/)) is
+rebuilt and published to GitHub Pages by the **Build firmware and web
+flasher** GitHub Action on every push to `main`. Each run also keeps the files
+as a `bunnyhop-firmware` artifact: to use one offline, unzip it, run
+`python3 -m http.server` in the folder and open `http://localhost:8000/`
+(Web Serial allows `localhost` without HTTPS).
 
 ### With PlatformIO
 

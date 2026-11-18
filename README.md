@@ -17,7 +17,9 @@ program, just as Violet's servers once did.
 
 ## Get started
 
-1. **Install BunnyHop on the ESP32**, from the browser flasher or with PlatformIO.
+1. **Install BunnyHop on the ESP32** from the
+   [browser flasher](https://davidchatting.com/BunnyHop/) (Chrome or Edge), or
+   with PlatformIO.
 2. **Put the rabbit in setup mode**: unplug it, hold the button on its head
    while plugging it back in, and let go when all its lights are blue.
    BunnyHop finds it and configures it, and the rabbit restarts.
@@ -73,7 +75,7 @@ Not yet working or not yet tested:
 
 [docs/STATUS.md](docs/STATUS.md) has the full evidence and the known
 limitations, and open problems are in the
-[issues](https://github.com/davidchatting-bot/BunnyHop/issues).
+[issues](https://github.com/davidchatting/BunnyHop/issues).
 
 ## More documentation
 

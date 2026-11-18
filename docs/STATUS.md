@@ -1,7 +1,7 @@
 # Status
 
 What has been tested, and how. Open problems are tracked as
-[GitHub issues](https://github.com/davidchatting-bot/BunnyHop/issues).
+[GitHub issues](https://github.com/davidchatting/BunnyHop/issues).
 
 > The original brief said "Nabaztag V1". The physical rabbit is a Nabaztag:tag
 > (V2) - RFID and the microphone, both required by the brief, only exist on V2.
