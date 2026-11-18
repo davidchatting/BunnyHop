@@ -85,7 +85,8 @@ limitations, and open problems are in the
 ## Author
 
 BunnyHop is by **David Chatting**, who also drew the rabbit. It was built with
-Claude Code; the prompts are logged in [PROMPTS.md](PROMPTS.md).
+Claude Code using the Claude Opus 5.5 model (`claude-opus-5-5`); the prompts
+are logged in [PROMPTS.md](PROMPTS.md).
 
 ## Credits
 

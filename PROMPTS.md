@@ -365,3 +365,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 45.
 
 > David Chatting is the author and illustrated the rabbit, I don't need the pdf in the repo, we don't need to worry about where that comes from
+
+## 46.
+
+> should say waht clude model was used
