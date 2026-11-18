@@ -25,6 +25,12 @@ program, just as Violet's servers once did.
    BunnyHop finds it and configures it, and the rabbit restarts.
 3. **Join the rabbit's Wi-Fi** (`Nabaztag` + six characters, e.g.
    `Nabaztag82DE00`) and open **http://192.168.4.1/**.
+4. **Optionally, put it on your home Wi-Fi**: in the web app open
+   **Connection → Home Wi-Fi**, press **Scan**, pick your network, enter its
+   password and press **Save & connect**. Then rejoin your home Wi-Fi and open
+   **http://bunnyhop.local/**. The rabbit's own network becomes hidden and
+   private to the rabbit, and comes back as an open network if your home
+   Wi-Fi goes down.
 
 [docs/SETUP.md](docs/SETUP.md) has the details: installing, first-time setup
 and how the networks work.
@@ -35,9 +41,8 @@ and how the networks work.
   control: tap a light to change its colour, drag an ear to move it, play
   sounds, and see button presses, RFID tags and recorded messages as they
   happen. Several people can use it at once.
-- **On your home Wi-Fi.** Give BunnyHop your Wi-Fi details and open
-  **http://bunnyhop.local/** from your home network. The rabbit's own network
-  then becomes hidden and private to the rabbit.
+- **On your home Wi-Fi.** Once BunnyHop is on your home network (step 4
+  above), open **http://bunnyhop.local/** from any device on it.
 - **From your own code.** `rabbit-api.js` is a small JavaScript client for web
   pages and p5.js sketches:
 

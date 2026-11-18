@@ -373,3 +373,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 47.
 
 > rabbit image with only a red nose, no other leds
+
+## 48.
+
+> highlevel setup instructions need to include how to put tit on thyour local home network
