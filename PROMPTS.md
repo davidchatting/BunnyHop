@@ -296,3 +296,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 30.
 
 > if the rabbit is not connected, use the ghost outline and turn all the leds off
+
+## 31.
+
+> there needs to be a grey outlined circle as a target for each led in the webapp
