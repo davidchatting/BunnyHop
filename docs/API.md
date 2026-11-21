@@ -114,11 +114,12 @@ report LED colours).
 
 ```json
 {"ap": "BunnyHop3A1F7C", "private": true, "apClients": 1, "rabbitSn": "0013d382de00",
- "lan": {"ssid": "UniFi", "state": "connected", "ip": "192.168.1.71", "host": "bunnyhop.local"}, ...}
+ "lan": {"ssid": "UniFi", "state": "connected", "ip": "192.168.1.71", "host": "bunnyhop.local", "router": true}, ...}
 ```
 
-`lan.state`: `unset`, `connecting`, `connected`, `unavailable`. `private`: the
-rabbit's network is hidden and rabbit-only (home Wi-Fi is up). The password is
+`lan.state`: `unset`, `connecting`, `connected`, `unavailable`. `lan.router`:
+the home router answers pings. `private`: the rabbit's network is hidden and
+rabbit-only (a rabbit is paired and home Wi-Fi works, i.e. `lan.router`). The password is
 never returned.
 
 ## REST

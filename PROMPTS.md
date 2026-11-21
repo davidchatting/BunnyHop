@@ -312,3 +312,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 34.
 
 > we're going to repair the rabbit its ok, buit now the network should be called BunnyHopXXXXXX
+
+## 36.
+
+> no that's not right, if there is no home wifi set (and working via ping of router) then the the only way to reconfigure is via an unhidden wifi network

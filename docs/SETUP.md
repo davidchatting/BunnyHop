@@ -64,9 +64,14 @@ network name (`Nabaztag` + its own MAC) and has to be paired again.
 The ESP32 has one radio. It hosts **one** network - the rabbit's - and can at
 the same time join your **home Wi-Fi**:
 
-| | Home Wi-Fi connected | Home Wi-Fi not set or unreachable |
+| | Rabbit paired and home Wi-Fi working | Otherwise |
 |---|---|---|
 | Rabbit's network (`BunnyHop3A1F7C`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
+
+Home Wi-Fi counts as working only while its router answers pings (checked
+every 30 s; two silent rounds in a row and it counts as down). So whenever
+`bunnyhop.local` might not be reachable, the rabbit's network is visible and
+you can always get in to reconfigure.
 | Web app | `http://bunnyhop.local/` on your home network | `http://192.168.4.1/` on the rabbit's network |
 
 - Set home Wi-Fi in the web app: **Connection → Home Wi-Fi → Scan**, pick the
@@ -75,7 +80,8 @@ the same time join your **home Wi-Fi**:
   home Wi-Fi and open `http://bunnyhop.local/`. **Forget** reverses this.
 - You never have to set home Wi-Fi: without it BunnyHop works entirely on the
   rabbit's network.
-- If home Wi-Fi drops, the rabbit's network becomes public again at once and
+- If home Wi-Fi drops or the router stops answering, the rabbit's network
+  becomes public again (at once on a drop, within about 30 s otherwise) and
   BunnyHop retries every minute (each attempt is capped at 15 s, because a
   searching ESP32 disturbs the rabbit's network). When it reconnects, other
   devices are disconnected again.

@@ -3,6 +3,8 @@
 #include <ESPmDNS.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
+#include <lwip/ip_addr.h>
+#include <ping/ping_sock.h>
 #include <map>
 #include "config.h"
 #include "eventlog.h"
@@ -36,6 +38,7 @@ static bool inSetup = false;       // STA is busy with the rabbit's setup networ
 static String lanIp;
 static String lanState = "unset";  // unset | connecting | connected | unavailable
 static volatile bool apLocked = false;
+static bool isPaired = false;      // cached: store has K_AP_SSID
 static uint8_t rabbitMac[6];
 static bool haveRabbitMac = false;
 static bool scanRequested = false;
@@ -154,6 +157,7 @@ void begin() {
     WiFi.mode(WIFI_AP_STA);
     WiFi.setSleep(false);
     String saved = store::get(K_AP_SSID);
+    isPaired = saved.length() > 0;
     startAp(ownSsid());
     if (!saved.length()) {
         LOGI("wifi", "not provisioned yet - will scan for a rabbit in setup mode%s", AUTO_PAIR ? "" : " (auto-pair disabled)");
@@ -172,7 +176,7 @@ void begin() {
 }
 
 String apSsid() { return ap; }
-bool paired() { return store::get(K_AP_SSID).length() > 0; }
+bool paired() { return isPaired; }
 
 String scanForRabbit(String *bssidOut, int *channelOut) {
     LOGI("wifi", "scanning for rabbits in setup mode...");
@@ -448,6 +452,7 @@ bool pair() {
         return false;
     }
     store::set(K_AP_SSID, newAp);
+    isPaired = true;
     if (newAp != ap) startAp(newAp);
     lastPairResult = "ok: rabbit told to join " + newAp;
     lastRabbitContact = millis();
@@ -475,6 +480,7 @@ void kickRabbit(uint32_t offMs) {
 
 void forget() {
     store::remove(K_AP_SSID);
+    isPaired = false;
     store::remove(K_SETUP_BSSID);
     store::remove(K_SETUP_SSID);
     store::remove(K_RABBIT_SN);
@@ -505,6 +511,45 @@ void pauseLan(uint32_t ms) {
     WiFi.disconnect(false, false);
     lanUp = false;
     LOGI("wifi", "home Wi-Fi paused for %lus (simulated outage)", (unsigned long)(ms / 1000));
+}
+
+// ---- router check: home Wi-Fi only counts once its router answers ----
+static volatile bool routerOk = false;
+static volatile bool pingBusy = false;
+static volatile uint8_t pingFails = 0;
+static uint32_t lastPingAt = 0;
+static esp_ping_handle_t pingSession = nullptr;
+
+static void onPingEnd(esp_ping_handle_t h, void *) {
+    uint32_t replies = 0;
+    esp_ping_get_profile(h, ESP_PING_PROF_REPLY, &replies, sizeof(replies));
+    if (replies) {
+        pingFails = 0;
+        routerOk = true;
+    } else if (++pingFails >= ROUTER_PING_FAILS) {
+        routerOk = false;
+    }
+    pingBusy = false;
+}
+
+static void pingRouter() {
+    if (pingSession) {
+        esp_ping_delete_session(pingSession);
+        pingSession = nullptr;
+    }
+    IPAddress gw = WiFi.gatewayIP();
+    if (gw == IPAddress((uint32_t)0)) return;
+    esp_ping_config_t cfg = ESP_PING_DEFAULT_CONFIG();
+    IP_ADDR4(&cfg.target_addr, gw[0], gw[1], gw[2], gw[3]);
+    cfg.count = 3;
+    cfg.interval_ms = 500;
+    cfg.timeout_ms = 1000;
+    esp_ping_callbacks_t cb = {};
+    cb.on_ping_end = onPingEnd;
+    if (esp_ping_new_session(&cfg, &cb, &pingSession) == ESP_OK) {
+        pingBusy = true;
+        esp_ping_start(pingSession);
+    }
 }
 
 static void lanStart() {
@@ -555,9 +600,25 @@ static void lanLoop() {
         lanStart();
     }
 
-    // The rabbit's network is private while home Wi-Fi works, and open
-    // (captive portal to the web app) otherwise.
-    bool wantLock = lanUp;
+    // Is home Wi-Fi really working? Only while its router answers pings.
+    if (!lanUp) {
+        routerOk = false;
+        pingFails = 0;
+        lastPingAt = 0;
+    } else if (!pingBusy && (lastPingAt == 0 || now - lastPingAt > (routerOk ? ROUTER_PING_MS : ROUTER_PING_RETRY_MS))) {
+        lastPingAt = now;
+        pingRouter();
+    }
+    static bool routerWas = false;
+    if (routerOk != routerWas) {
+        routerWas = routerOk;
+        LOGI("wifi", "home router %s", routerOk ? "answers" : "doesn't answer");
+    }
+
+    // The rabbit's network is private (hidden, rabbit only) once a rabbit is
+    // paired and home Wi-Fi works, and open and visible otherwise (captive
+    // portal to the web app), so there is always a way in to reconfigure.
+    bool wantLock = isPaired && routerOk;
     if (wantLock != apLocked) {
         apLocked = wantLock;
         LOGI("wifi", "'%s' is now %s", ap.c_str(), wantLock ? "private: hidden, rabbit only" : "public: visible, captive portal");
@@ -641,8 +702,9 @@ void statusJson(JsonObject o) {
     lan["ssid"] = lanSsid;
     lan["state"] = lanState;
     lan["ip"] = lanUp ? lanIp : "";
+    lan["router"] = (bool)routerOk;  // answers pings
     lan["host"] = String(MDNS_NAME) + ".local";
-    o["private"] = (bool)apLocked;  // hidden + rabbit-only
+    o["private"] = (bool)apLocked;  // hidden + rabbit-only (paired, home Wi-Fi working)
 }
 
 }  // namespace wifimgr

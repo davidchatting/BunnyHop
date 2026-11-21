@@ -26,6 +26,7 @@ What has been tested, and how. Open problems are tracked as
 | Web app on iPad (touch: tap lights, drag ears) | **Physically tested** | Confirmed by the user on a real iPad (previous p5.js drawing; the new SVG rabbit is not yet tested on hardware) |
 | Home Wi-Fi + `http://bunnyhop.local/` | **Physically tested** | Joined the user's network; page served over mDNS |
 | Rabbit network hidden + rabbit-only while home Wi-Fi is up | **Physically tested** | Rabbit followed the channel change and rejoined the hidden network in ~20-40 s |
+| Private only once paired and the home router answers pings | **Builds; not yet tested on hardware** | |
 | Rabbit network public again when home Wi-Fi drops | **Physically tested** (bridge side) | Simulated outage (`lanpause`): network became visible/open, rabbit rejoined in 37 s; another device joining not yet confirmed |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
