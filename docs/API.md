@@ -91,6 +91,7 @@ Any later program (another LED command, audio, chor) or a button click ends it.
 | `scan` | `found` |
 | `diagnostics` | `node`, `fields` |
 | `lan` | `state` (`connected`/`unavailable`), `ip` |
+| `network` | `ap`, `private`, `lan` - the rabbit's network is about to turn private or public (sent just before it restarts) |
 | `lanScan` | `networks`: `[{ssid, rssi, open}]` |
 | `log` | `cat`, `msg` |
 

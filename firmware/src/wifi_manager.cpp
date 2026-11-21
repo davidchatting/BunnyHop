@@ -39,6 +39,7 @@ static String lanIp;
 static String lanState = "unset";  // unset | connecting | connected | unavailable
 static volatile bool apLocked = false;
 static bool isPaired = false;      // cached: store has K_AP_SSID
+static uint32_t lockHoldUntil = 0; // keep the network private while BunnyHop is briefly off home Wi-Fi
 static uint8_t rabbitMac[6];
 static bool haveRabbitMac = false;
 static bool scanRequested = false;
@@ -220,6 +221,9 @@ static void leaveSetup() {
     delay(200);
     inSetup = false;
     lanRequested = lanSsid.length() > 0;  // back to home Wi-Fi
+    // Pairing only took BunnyHop off home Wi-Fi for a moment: stay private
+    // while it rejoins rather than flipping the network to public and back.
+    if (lanRequested && apLocked) lockHoldUntil = millis() + LAN_CONNECT_TIMEOUT_MS + 10000UL;
 }
 
 // Plain HTTP/1.0 GET against the rabbit's own tiny web server.
@@ -619,9 +623,18 @@ static void lanLoop() {
     // paired and home Wi-Fi works, and open and visible otherwise (captive
     // portal to the web app), so there is always a way in to reconfigure.
     bool wantLock = isPaired && routerOk;
+    if (!wantLock && apLocked && (inSetup || (int32_t)(lockHoldUntil - now) > 0)) wantLock = true;  // see leaveSetup()
     if (wantLock != apLocked) {
         apLocked = wantLock;
         LOGI("wifi", "'%s' is now %s", ap.c_str(), wantLock ? "private: hidden, rabbit only" : "public: visible, captive portal");
+        // Tell the web pages first (restarting the AP drops everyone on it),
+        // so a page on this network can say where to go next.
+        rabbit::emit("network", [wantLock](JsonObject o) {
+            o["ap"] = ap;
+            o["private"] = wantLock;
+            o["lan"] = lanSsid;
+        });
+        delay(300);
         if (wantLock) deauthOthers();
         // the rabbit re-associates by name; if its session goes stale the
         // watchdog restarts it
@@ -680,8 +693,11 @@ void loop() {
         kickRabbit(KICK_AP_OFF_MS);
         return;
     }
-    // Rabbit missing for a while: look for one in setup mode periodically
-    if (AUTO_PAIR && now - lastRabbitContact > RABBIT_RESCAN_AFTER_MS && now - lastScan > RABBIT_RESCAN_INTERVAL_MS) {
+    // No rabbit paired yet: look for one in setup mode every 30 s from boot.
+    // Paired rabbit missing for a while: look every minute (it may have been reset).
+    bool lookNow = !isPaired ? now - lastScan > UNPAIRED_SCAN_INTERVAL_MS
+                             : now - lastRabbitContact > RABBIT_RESCAN_AFTER_MS && now - lastScan > RABBIT_RESCAN_INTERVAL_MS;
+    if (AUTO_PAIR && lookNow) {
         lastScan = now;
         String bssid;
         int ch;

@@ -316,3 +316,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 36.
 
 > no that's not right, if there is no home wifi set (and working via ping of router) then the the only way to reconfigure is via an unhidden wifi network
+
+## 37.
+
+> ok fix everything, also can the webpages redirect to the next place, assuming the wifi networks are changed (say which on screen)

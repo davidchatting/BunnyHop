@@ -14,6 +14,7 @@
 const rabbit = new RabbitClient();
 Events.init(rabbit);
 Controls.init(rabbit);
+Moving.init(rabbit);
 
 (() => {
   const SIDES = ['left', 'right'];

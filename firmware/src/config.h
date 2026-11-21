@@ -31,6 +31,7 @@
 // rabbit in setup mode again (and keep looking at this interval).
 #define RABBIT_RESCAN_AFTER_MS (3UL * 60UL * 1000UL)
 #define RABBIT_RESCAN_INTERVAL_MS (60UL * 1000UL)
+#define UNPAIRED_SCAN_INTERVAL_MS (30UL * 1000UL)  // no rabbit paired yet: look this often from boot
 
 // Ears: positions 0..16 as used by Violet ambient packets
 #define EAR_MAX 16

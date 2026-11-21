@@ -63,7 +63,8 @@ const Events = (() => {
     const text = {
       unset: 'Not set up.',
       connecting: 'Connecting to ' + lan.ssid + '…',
-      connected: 'Connected to ' + lan.ssid + ' (' + lan.ip + ') - http://' + lan.host + '/',
+      connected: 'Connected to ' + lan.ssid + ' (' + lan.ip + ') - http://' + lan.host + '/' +
+        (lan.router === false ? ". Its router doesn't answer pings, so the rabbit's network stays visible and open." : ''),
       unavailable: "Can't reach " + lan.ssid + ' - retrying every minute.',
     }[lan.state] || '';
     $('lan-status').textContent = text;
@@ -73,7 +74,7 @@ const Events = (() => {
   // the bridge's Wi-Fi status isn't in the periodic state push; poll it
   function refreshWifi() {
     if (!rabbit.connected) return;
-    rabbit.getWifi().then((w) => { rabbit.wifi = w; info(); status(); }).catch(() => {});
+    rabbit.getWifi().then((w) => { rabbit.wifi = w; Moving.remember(w); info(); status(); }).catch(() => {});
   }
 
   function init(r) {
@@ -86,7 +87,9 @@ const Events = (() => {
     rabbit.on('connection', (m) => add(m.connected ? 'Rabbit connected' : 'Rabbit disconnected'));
     rabbit.on('pairing', (m) => add(m.step === 'done' ? 'Rabbit paired' : 'Pairing with ' + (m.ssid || 'rabbit') + '…'));
     rabbit.on('lan', (m) => {
-      add(m.state === 'connected' ? 'Joined home Wi-Fi (' + m.ip + ')' : "Home Wi-Fi isn't reachable");
+      const ssid = (rabbit.wifi && rabbit.wifi.lan && rabbit.wifi.lan.ssid) || 'home Wi-Fi';
+      add(m.state === 'connected' ? 'Joined ' + ssid + ' (' + m.ip + ')'
+        : "Can't reach " + ssid + ' (wrong password, or out of range?) - retrying every minute');
       refreshWifi();
     });
     setInterval(refreshWifi, 5000);

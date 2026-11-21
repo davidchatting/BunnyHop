@@ -118,15 +118,27 @@ const Controls = (() => {
       e.preventDefault();
       const ssid = $('lan-ssid').value.trim();
       if (!ssid) return;
-      const onRabbitNet = location.hostname === '192.168.4.1';
-      if (onRabbitNet && !confirm('Once BunnyHop joins ' + ssid + ', this network becomes private to the rabbit and ' +
-        'this device will be disconnected. Reconnect to ' + ssid + ' and open http://bunnyhop.local/. Continue?')) return;
+      // Say what will happen to this page, which depends on where it is now.
+      const k = Moving.known(), onRabbitNet = location.hostname === '192.168.4.1';
+      const warning = onRabbitNet
+        ? (k.paired ? 'Once BunnyHop is on ' + ssid + ', ' + (k.ap || 'this network') + ' becomes private to the rabbit and ' +
+            'this device will be disconnected. Join ' + ssid + ' and this page moves to bunnyhop.local by itself.' : '')
+        : 'BunnyHop will leave ' + (k.lan || 'this network') + ' for ' + ssid + '. This page loses it until this device is on ' +
+            ssid + ' too' + (k.lan === ssid ? ' (it may drop for a moment).' : '.');
+      if (warning && !confirm(warning + ' Continue?')) return;
+      Moving.expect('lan-join', ssid);
       report(rabbit.send({ cmd: 'lan', ssid, password: $('lan-pass').value }));
       $('lan-pass').value = '';
       Events.add('Joining ' + ssid + '…');
     };
     $('lan-forget').onclick = () => {
-      if (!confirm('Forget the home Wi-Fi? The rabbit\'s network will become open again.')) return;
+      const k = Moving.known(), onRabbitNet = location.hostname === '192.168.4.1';
+      const ap = k.ap || "the rabbit's network";
+      if (!confirm(onRabbitNet
+        ? 'Forget the home Wi-Fi? ' + ap + ' becomes visible and open again.'
+        : 'Forget the home Wi-Fi? BunnyHop leaves ' + (k.lan || 'it') + ' and this page loses it. Join ' + ap +
+          ' (visible and open again) and this page moves to 192.168.4.1 by itself.')) return;
+      Moving.expect('lan-forget');
       report(rabbit.send({ cmd: 'lan', ssid: '' }));
       $('lan-ssid').value = '';
     };
@@ -138,7 +150,12 @@ const Controls = (() => {
     initSounds();
     initLan();
     $('pair').onclick = () => {
-      if (confirm('Look for a rabbit in pairing mode (blue lights) and connect it to this bridge?')) report(rabbit.pair());
+      const k = Moving.known(), onRabbitNet = location.hostname === '192.168.4.1';
+      const note = !onRabbitNet && k.lan
+        ? ' BunnyHop leaves ' + k.lan + ' for about 30 seconds to talk to the rabbit, so this page drops and reconnects by itself.' : '';
+      if (!confirm('Look for a rabbit in pairing mode (blue lights) and connect it to this bridge?' + note)) return;
+      Moving.expect('pair', k.lan);
+      report(rabbit.pair());
     };
   }
 

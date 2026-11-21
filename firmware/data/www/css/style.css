@@ -119,3 +119,12 @@ h3 { font-size: 14px; margin: 16px 0 6px; }
 .row-inline { display: flex; gap: 6px; }
 .row-inline input { flex: 1; }
 .lan .row { justify-content: flex-start; }
+
+/* "BunnyHop has moved" panel: shown while the page has lost BunnyHop */
+.moving { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center;
+  padding: 16px; background: rgba(43, 42, 39, .35); z-index: 20; }
+.moving-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+  max-width: 440px; width: 100%; box-shadow: 0 8px 30px rgba(0, 0, 0, .15); }
+.moving-card h2 { text-transform: none; letter-spacing: 0; font-size: 17px; color: var(--ink); margin: 0 0 8px; }
+.moving-card .what { margin: 0; font-size: 15px; line-height: 1.45; }
+.moving-card .trying { margin: 10px 0 0; }

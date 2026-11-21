@@ -61,9 +61,10 @@
           <button type="button" id="lan-forget">Forget</button>
         </div>
       </form>
-      <p class="hint">On your home Wi-Fi, BunnyHop is at <b>http://bunnyhop.local/</b>, and the rabbit's
-      own network becomes hidden and private to the rabbit. Without home Wi-Fi, join the
-      rabbit's network instead and this page opens by itself.</p>
+      <p class="hint">On your home Wi-Fi, BunnyHop is at <b>http://bunnyhop.local/</b>, and once a rabbit is
+      paired its own network becomes hidden and private to the rabbit. Without working home Wi-Fi,
+      join the rabbit's network instead and this page opens by itself. When a change moves BunnyHop
+      to another network, this page says which one to join and follows it.</p>
 
       <h3>Rabbit</h3>
       <button id="pair">Pair a rabbit</button>
@@ -71,12 +72,21 @@
     </details>
   </main>
 
+  <div id="moving" class="moving" role="alert" hidden>
+    <div class="moving-card">
+      <h2></h2>
+      <p class="what"></p>
+      <p class="trying hint"></p>
+    </div>
+  </div>
+
   <div id="palette" class="palette" hidden>
     <div class="swatches"></div>
     <label class="custom">Custom <input type="color" id="led-custom"></label>
   </div>
 
   <script src="js/rabbit-api.js"></script>
+  <script src="js/moving.js"></script>
   <script src="js/events.js"></script>
   <script src="js/controls.js"></script>
   <script src="js/rabbit-drawing.js"></script>

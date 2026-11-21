@@ -14,7 +14,14 @@
 - **Sounds** - tap to play on the rabbit; "Add a sound…" uploads an MP3.
 - **Activity** - button presses, RFID tags, ears moved by hand, and recorded
   messages (long-press the rabbit's button) with a play button.
-- **Connection** - Wi-Fi name, rabbit identity, and pairing a new rabbit.
+- **Connection** - Wi-Fi name, rabbit identity, home Wi-Fi, and pairing a new rabbit.
+
+When a change moves BunnyHop to another network (joining or forgetting home
+Wi-Fi, pairing, home Wi-Fi going down or coming back), the page says which
+network to join and then moves itself to wherever BunnyHop answers:
+`http://192.168.4.1/`, `http://bunnyhop.local/` or its home Wi-Fi address.
+A phone's captive-portal window closes when the phone changes network, so
+there open the address in the browser instead.
 
 For anything more (choreographies, raw programs, debugging) use the API from
 your own code ([API.md](API.md), `rabbit-api.js`) or the serial console.

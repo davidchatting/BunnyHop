@@ -27,6 +27,9 @@ What has been tested, and how. Open problems are tracked as
 | Home Wi-Fi + `http://bunnyhop.local/` | **Physically tested** | Joined the user's network; page served over mDNS |
 | Rabbit network hidden + rabbit-only while home Wi-Fi is up | **Physically tested** | Rabbit followed the channel change and rejoined the hidden network in ~20-40 s |
 | Private only once paired and the home router answers pings | **Builds; not yet tested on hardware** | |
+| Looks for an unpaired rabbit every 30 s from boot | **Builds; not yet tested on hardware** | |
+| Network stays private while pairing from home Wi-Fi | **Builds; not yet tested on hardware** | |
+| Web app says which network to join and follows BunnyHop to it | **Written; not yet tested** | |
 | Rabbit network public again when home Wi-Fi drops | **Physically tested** (bridge side) | Simulated outage (`lanpause`): network became visible/open, rabbit rejoined in 37 s; another device joining not yet confirmed |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |

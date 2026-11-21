@@ -52,9 +52,14 @@ pio run -t uploadfs      # web app, bootcode, sample audio (LittleFS)
 
 The network is **open** (no password) - the rabbit's 2005 Wi-Fi stack needs
 it. On later boots the bridge restores its AP and the rabbit reconnects by
-itself. If the rabbit doesn't appear for 3 minutes, the bridge rescans for a
-rabbit in setup mode every minute; "Pair a rabbit" in the web app or
-`pair` on the serial console does it on demand.
+itself. Until a rabbit is paired, the bridge looks for one in setup mode every
+30 s; once paired, if the rabbit doesn't appear for 3 minutes, it looks every
+minute. "Pair a rabbit" in the web app or `pair` on the serial console does
+it on demand.
+
+Pairing while BunnyHop is on home Wi-Fi takes it off home Wi-Fi for about
+30 s (the ESP32 has one radio and can only be a client of one network). The
+rabbit's network stays private meanwhile.
 
 A rabbit paired by an older version of BunnyHop was given a different
 network name (`Nabaztag` + its own MAC) and has to be paired again.
