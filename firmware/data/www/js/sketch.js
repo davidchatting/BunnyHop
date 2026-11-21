@@ -98,11 +98,24 @@ Moving.init(rabbit);
     // Keep going the way the ear already is; swinging all the way out flips
     // between the forward half (0-8) and the back half (8-16) of the turn.
     dragging = { side, back: target[side] > 8 };
+    svg.style.cursor = 'grabbing';
     svg.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
+  // Cursor over the drawing: a hand over a light, grab over an ear (only
+  // while the rabbit is connected and can be controlled).
+  function hoverCursor(e) {
+    let c = '';
+    if (rabbit.rabbitConnected && e.pointerType === 'mouse') {
+      if (hitEar(e)) c = 'grab';
+      else if (hitLed(svgPoint(e)) >= 0) c = 'pointer';
+    }
+    if (svg.style.cursor !== c) svg.style.cursor = c;
+  }
+  svg.addEventListener('pointerleave', () => { if (!dragging) svg.style.cursor = ''; });
+
   svg.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
+    if (!dragging) return hoverCursor(e);
     const { side } = dragging;
     const out = outFromPointer(side, svgPoint(e));
     if (out >= 7.5) dragging.flip = true;
@@ -118,6 +131,7 @@ Moving.init(rabbit);
     if (!dragging) return;
     const { side } = dragging;
     dragging = null;
+    svg.style.cursor = '';
     const pos = target[side];
     localUntil = Date.now() + 2500;
     (side === 'left' ? rabbit.ears(pos, null) : rabbit.ears(null, pos)).catch(() => {});

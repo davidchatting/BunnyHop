@@ -332,3 +332,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 40.
 
 > says "Can't reach BunnyHop on UniFi" but I don't think that's true - the web interface is always disabled becuase of the floating window
+
+## 41.
+
+> mouse should change over interactive elements
