@@ -320,3 +320,11 @@ Clarifying answers are included where they changed the direction of the work.
 ## 37.
 
 > ok fix everything, also can the webpages redirect to the next place, assuming the wifi networks are changed (say which on screen)
+
+## 38.
+
+> I don't like the install floating window can that be brought into the page in a more integrated way?
+
+## 39.
+
+> yes go ahead

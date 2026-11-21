@@ -12,11 +12,21 @@
 ### From the browser
 
 Open **https://davidchatting.com/BunnyHop/** in Chrome or Edge on a computer,
-plug in the ESP32, press **Connect**, pick its serial port and install. The
-parts are flashed at their own offsets, so the rabbit pairing and home Wi-Fi
-settings survive unless you tick **Erase device**.
+plug in the ESP32, press **Connect** and pick its serial port. The page then
+walks through the whole setup over the same USB cable, reporting what the
+ESP32 is doing at each step:
 
-The flasher ([ESP Web Tools](https://esphome.github.io/esp-web-tools/)) is
+1. **Install** - with a progress bar per part. The parts are flashed at their
+   own offsets, so the rabbit pairing and home Wi-Fi settings survive unless
+   you tick **Start fresh**. If BunnyHop is already installed you can keep it.
+2. **Pair the rabbit** - shows BunnyHop's network name, and follows the ESP32
+   finding, configuring and connecting the rabbit.
+3. **Home Wi-Fi** (optional) - scan and connect; the password goes to the
+   ESP32 over USB only.
+4. **Open the web app** - the address to use, depending on step 3.
+
+It uses [esptool-js](https://github.com/espressif/esptool-js) to flash and
+the serial console's JSON commands and `EVT` lines to follow the setup. It is
 rebuilt and published to GitHub Pages by the **Build firmware and web
 flasher** GitHub Action on every push to `main`. Each run also keeps the files
 as a `bunnyhop-firmware` artifact: to use one offline, unzip it, run
