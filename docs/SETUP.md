@@ -39,20 +39,15 @@ pio run -t uploadfs      # web app, bootcode, sample audio (LittleFS)
 
 1. Power the ESP32. It starts its AP, `BunnyHop` + the last three bytes of
    the ESP32's own MAC address (e.g. `BunnyHop3A1F7C`), and scans for a
-   rabbit in setup mode. The name never changes. The network is visible until
-   a rabbit is paired and hidden after that, so join it now (step 5) or note
-   its name.
+   rabbit in setup mode. The name never changes, so you can join it now.
 2. Put the rabbit into setup mode: unplug it, hold the button on its head while
    plugging it back in, release when **all LEDs are blue**.
 3. Within ~30 s the bridge joins the rabbit's `NabaztagXX` network, reads its
    setup page, and submits it with the bridge's AP as the Wi-Fi network and the
    bridge as the "Violet Platform". The rabbit restarts by itself.
-4. The bridge hides its AP. The rabbit joins it, downloads the bootcode and
-   logs in.
+4. The rabbit joins the bridge's AP, downloads the bootcode and logs in.
 5. Join the bridge's Wi-Fi network from any device and open **http://192.168.4.1/**.
    (Phones may show it as a captive portal; you can also open it in a browser.)
-   After pairing it isn't listed, so add it by name ("Other network" / "Hidden
-   network"); the web app shows the name under Connection.
 6. Optionally put BunnyHop on your home Wi-Fi (see [Networks](#networks) below).
 
 The network is **open** (no password) - the rabbit's 2005 Wi-Fi stack needs
@@ -71,7 +66,7 @@ the same time join your **home Wi-Fi**:
 
 | | Home Wi-Fi connected | Home Wi-Fi not set or unreachable |
 |---|---|---|
-| Rabbit's network (`BunnyHop3A1F7C`) | **Rabbit only**: no password, hidden, and every device except the rabbit is disconnected straight away | **Open**: no password; joining it pops up the web app (captive portal). Hidden once a rabbit is paired, visible before |
+| Rabbit's network (`BunnyHop3A1F7C`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
 | Web app | `http://bunnyhop.local/` on your home network | `http://192.168.4.1/` on the rabbit's network |
 
 - Set home Wi-Fi in the web app: **Connection → Home Wi-Fi → Scan**, pick the
@@ -80,7 +75,7 @@ the same time join your **home Wi-Fi**:
   home Wi-Fi and open `http://bunnyhop.local/`. **Forget** reverses this.
 - You never have to set home Wi-Fi: without it BunnyHop works entirely on the
   rabbit's network.
-- If home Wi-Fi drops, the rabbit's network is open to other devices again at once and
+- If home Wi-Fi drops, the rabbit's network becomes public again at once and
   BunnyHop retries every minute (each attempt is capped at 15 s, because a
   searching ESP32 disturbs the rabbit's network). When it reconnects, other
   devices are disconnected again.

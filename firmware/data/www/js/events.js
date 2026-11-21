@@ -46,7 +46,7 @@ const Events = (() => {
     const s = rabbit.state || {};
     const w = rabbit.wifi || {};
     const rows = {
-      "Rabbit's network": w.ap ? w.ap + ' (' + [w.hidden ? 'hidden' : 'visible', w.private ? 'rabbit only' : 'open'].join(', ') + ')' : '',
+      "Rabbit's network": w.ap ? w.ap + (w.private ? ' (hidden, rabbit only)' : ' (open)') : '',
       'Rabbit': s.sn ? s.sn.replace(/(..)(?!$)/g, '$1:') : '',
       'State': s.connected ? 'connected' : s.phase,
     };
