@@ -119,7 +119,7 @@ const Controls = (() => {
       const ssid = $('lan-ssid').value.trim();
       if (!ssid) return;
       const onRabbitNet = location.hostname === '192.168.4.1';
-      if (onRabbitNet && !confirm('Once BunnyHop joins ' + ssid + ', this network becomes private to the rabbit and ' +
+      if (onRabbitNet && !confirm('Once BunnyHop joins ' + ssid + ', this network becomes rabbit-only and ' +
         'this device will be disconnected. Reconnect to ' + ssid + ' and open http://bunnyhop.local/. Continue?')) return;
       report(rabbit.send({ cmd: 'lan', ssid, password: $('lan-pass').value }));
       $('lan-pass').value = '';

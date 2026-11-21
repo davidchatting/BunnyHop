@@ -67,15 +67,17 @@ static void deauthOthers() {
 }
 
 static bool apHidden = false;
+static bool isPaired = false;  // cached store::get(K_AP_SSID) != ""
 
-// hidden: don't broadcast the SSID (private mode, while home Wi-Fi is up)
+// hidden: don't broadcast the SSID (once a rabbit is paired)
 static void startAp(const String &ssid, bool hidden = apHidden) {
     ap = ssid;
     apHidden = hidden;
     IPAddress ip(AP_IP_A, AP_IP_B, AP_IP_C, AP_IP_D);
     WiFi.softAPConfig(ip, ip, IPAddress(255, 255, 255, 0));
-    // Always open (no password) - the rabbit needs that. Private = hidden +
-    // locked to the rabbit's MAC; see lanLoop().
+    // Always open (no password) - the rabbit needs that. Hidden once a rabbit
+    // is paired; also locked to the rabbit's MAC while home Wi-Fi is up.
+    // See loop().
     WiFi.softAP(ap.c_str(), nullptr, AP_CHANNEL, hidden ? 1 : 0, AP_MAX_CLIENTS);
     // The rabbit's radio only decodes 802.11b (DSSS/CCK). With g/n enabled
     // the ESP32 sends it OFDM frames it can't receive, so the AP is b-only.
@@ -154,7 +156,8 @@ void begin() {
     WiFi.mode(WIFI_AP_STA);
     WiFi.setSleep(false);
     String saved = store::get(K_AP_SSID);
-    startAp(ownSsid());
+    isPaired = saved.length() > 0;
+    startAp(ownSsid(), isPaired);
     if (!saved.length()) {
         LOGI("wifi", "not provisioned yet - will scan for a rabbit in setup mode%s", AUTO_PAIR ? "" : " (auto-pair disabled)");
         pairRequested = AUTO_PAIR;
@@ -172,7 +175,7 @@ void begin() {
 }
 
 String apSsid() { return ap; }
-bool paired() { return store::get(K_AP_SSID).length() > 0; }
+bool paired() { return isPaired; }
 
 String scanForRabbit(String *bssidOut, int *channelOut) {
     LOGI("wifi", "scanning for rabbits in setup mode...");
@@ -448,7 +451,9 @@ bool pair() {
         return false;
     }
     store::set(K_AP_SSID, newAp);
-    if (newAp != ap) startAp(newAp);
+    isPaired = true;
+    // Hide the network now, before the restarting rabbit looks for it.
+    if (newAp != ap || !apHidden) startAp(newAp, true);
     lastPairResult = "ok: rabbit told to join " + newAp;
     lastRabbitContact = millis();
     rabbit::emit("pairing", [&](JsonObject o) {
@@ -475,6 +480,7 @@ void kickRabbit(uint32_t offMs) {
 
 void forget() {
     store::remove(K_AP_SSID);
+    isPaired = false;  // loop() makes the network visible again
     store::remove(K_SETUP_BSSID);
     store::remove(K_SETUP_SSID);
     store::remove(K_RABBIT_SN);
@@ -555,16 +561,19 @@ static void lanLoop() {
         lanStart();
     }
 
-    // The rabbit's network is private while home Wi-Fi works, and open
-    // (captive portal to the web app) otherwise.
-    bool wantLock = lanUp;
+    // The rabbit's network is hidden once a rabbit is paired, and also
+    // rabbit-only while home Wi-Fi works. Open to anyone who knows its name
+    // otherwise (captive portal to the web app).
+    bool wantLock = lanUp, wantHidden = isPaired;
     if (wantLock != apLocked) {
         apLocked = wantLock;
-        LOGI("wifi", "'%s' is now %s", ap.c_str(), wantLock ? "private: hidden, rabbit only" : "public: visible, captive portal");
+        LOGI("wifi", "'%s' is now %s", ap.c_str(), wantLock ? "rabbit only" : "open to anyone (captive portal)");
         if (wantLock) deauthOthers();
+    }
+    if (wantHidden != apHidden) {
         // the rabbit re-associates by name; if its session goes stale the
         // watchdog restarts it
-        startAp(ap, wantLock);
+        startAp(ap, wantHidden);
     }
 
     if (!mdnsStarted && lanUp) {
@@ -642,7 +651,8 @@ void statusJson(JsonObject o) {
     lan["state"] = lanState;
     lan["ip"] = lanUp ? lanIp : "";
     lan["host"] = String(MDNS_NAME) + ".local";
-    o["private"] = (bool)apLocked;  // hidden + rabbit-only
+    o["hidden"] = apHidden;
+    o["private"] = (bool)apLocked;  // rabbit-only
 }
 
 }  // namespace wifimgr

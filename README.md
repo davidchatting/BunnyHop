@@ -20,11 +20,14 @@ program, just as Violet's servers once did.
 1. **Install BunnyHop on the ESP32** from the
    [browser flasher](https://davidchatting.com/BunnyHop/) (Chrome or Edge), or
    with PlatformIO.
-2. **Put the rabbit in setup mode**: unplug it, hold the button on its head
-   while plugging it back in, and let go when all its lights are blue.
-   BunnyHop finds it and configures it, and the rabbit restarts.
-3. **Join the rabbit's Wi-Fi** (`BunnyHop` + six characters from the ESP32's
+2. **Join BunnyHop's Wi-Fi** (`BunnyHop` + six characters from the ESP32's
    MAC address, e.g. `BunnyHop3A1F7C`) and open **http://192.168.4.1/**.
+   Note the name: once a rabbit is paired the network is hidden, so it won't
+   appear in Wi-Fi lists and you join it by typing its name.
+3. **Put the rabbit in setup mode**: unplug it, hold the button on its head
+   while plugging it back in, and let go when all its lights are blue.
+   BunnyHop finds it and configures it, and the rabbit restarts and appears
+   in the web app.
 4. **Optionally, put it on your home Wi-Fi**: in the web app open
    **Connection → Home Wi-Fi**, press **Scan**, pick your network, enter its
    password and press **Save & connect**. Then rejoin your home Wi-Fi and open

@@ -26,6 +26,7 @@ What has been tested, and how. Open problems are tracked as
 | Web app on iPad (touch: tap lights, drag ears) | **Physically tested** | Confirmed by the user on a real iPad (previous p5.js drawing; the new SVG rabbit is not yet tested on hardware) |
 | Home Wi-Fi + `http://bunnyhop.local/` | **Physically tested** | Joined the user's network; page served over mDNS |
 | Rabbit network hidden + rabbit-only while home Wi-Fi is up | **Physically tested** | Rabbit followed the channel change and rejoined the hidden network in ~20-40 s |
+| Rabbit network hidden as soon as a rabbit is paired (with or without home Wi-Fi) | **Builds; not yet tested on hardware** | |
 | Rabbit network public again when home Wi-Fi drops | **Physically tested** (bridge side) | Simulated outage (`lanpause`): network became visible/open, rabbit rejoined in 37 s; another device joining not yet confirmed |
 | Sleep / wake packets | Protocol-verified | From bootcode source; not visually confirmed |
 | Ears moved by hand → event | **Physically tested** | Left ear moved by hand → `ears` event with correct side |
@@ -50,7 +51,8 @@ What has been tested, and how. Open problems are tracked as
 - **No volume control** (hardware wheel only); **MP3/WAV only from the bridge**
   (the rabbit can't reach the internet).
 - **Open Wi-Fi network** while home Wi-Fi isn't set or reachable: anyone in range
-  can join and control the rabbit. With home Wi-Fi it is hidden and rabbit-only,
+  who knows its name can join and control the rabbit (hiding it once paired
+  only keeps it out of Wi-Fi lists). With home Wi-Fi it is rabbit-only,
   but anyone on your home network can open `bunnyhop.local`.
 - **RFID not yet tested with a physical tag.** The reader (ST CRX14, to our
   knowledge) only sees ISO 14443-B ST tags (SRI512/SRIX4K family - Violet's
