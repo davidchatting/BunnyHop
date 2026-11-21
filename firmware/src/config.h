@@ -65,5 +65,5 @@
 #define LAN_RETRY_MS (60UL * 1000UL)
 // Home Wi-Fi only counts as working while its router answers pings.
 #define ROUTER_PING_MS (30UL * 1000UL)        // while it answers
-#define ROUTER_PING_RETRY_MS (10UL * 1000UL)  // while it doesn't
+#define ROUTER_PING_RETRY_MS (10UL * 1000UL)  // while it doesn't, or just missed
 #define ROUTER_PING_FAILS 2                   // silent rounds before it counts as down

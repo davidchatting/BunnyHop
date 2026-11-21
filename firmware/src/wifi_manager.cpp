@@ -605,7 +605,7 @@ static void lanLoop() {
         routerOk = false;
         pingFails = 0;
         lastPingAt = 0;
-    } else if (!pingBusy && (lastPingAt == 0 || now - lastPingAt > (routerOk ? ROUTER_PING_MS : ROUTER_PING_RETRY_MS))) {
+    } else if (!pingBusy && (lastPingAt == 0 || now - lastPingAt > (routerOk && !pingFails ? ROUTER_PING_MS : ROUTER_PING_RETRY_MS))) {
         lastPingAt = now;
         pingRouter();
     }
