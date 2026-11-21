@@ -25,7 +25,7 @@ const Moving = (() => {
   let rabbit;
   let known = { ap: '', lan: '', lanIp: '', private: false, paired: false };  // last seen
   let expected = null;     // { kind, ssid, until }
-  let lost = false, timer = null, panel;
+  let lost = false, timer = null, panel, dismissed = false;
 
   const here = () => location.origin + '/';
   const onAp = () => location.hostname === '192.168.4.1';
@@ -97,13 +97,18 @@ const Moving = (() => {
   async function round() {
     timer = null;
     if (!lost) return;
-    for (const url of candidates()) {
-      if (!lost) return;
-      render(url.replace(/\/$/, ''));
-      if (await probe(url)) {
-        if (url === here()) { render(''); break; }  // same address: the websocket reconnects by itself
-        location.href = url;
-        return;
+    // This page's own address still answers: BunnyHop hasn't gone anywhere,
+    // the websocket just reconnects by itself. No panel.
+    if (await probe(here())) {
+      panel.hidden = true;
+    } else {
+      for (const url of candidates().slice(1)) {
+        if (!lost) return;
+        if (!dismissed) render(url.replace(/\/$/, ''));
+        if (await probe(url)) {
+          location.href = url;
+          return;
+        }
       }
     }
     if (lost) timer = setTimeout(round, ROUND_MS);
@@ -122,6 +127,7 @@ const Moving = (() => {
 
   function onOpen() {
     lost = false;
+    dismissed = false;
     if (timer) clearTimeout(timer);
     timer = null;
     panel.hidden = true;
@@ -130,6 +136,8 @@ const Moving = (() => {
   function init(r) {
     rabbit = r;
     panel = document.getElementById('moving');
+    // The panel never blocks the page; it can also be put away.
+    panel.querySelector('.close').onclick = () => { dismissed = true; panel.hidden = true; };
     rabbit.on('hello', (m) => {
       remember(m.wifi);
       if (expected && expected.kind === 'pair' && m.wifi && m.wifi.lastPair) {
