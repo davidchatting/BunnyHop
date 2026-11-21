@@ -23,8 +23,8 @@ program, just as Violet's servers once did.
 2. **Put the rabbit in setup mode**: unplug it, hold the button on its head
    while plugging it back in, and let go when all its lights are blue.
    BunnyHop finds it and configures it, and the rabbit restarts.
-3. **Join the rabbit's Wi-Fi** (`Nabaztag` + six characters, e.g.
-   `Nabaztag82DE00`) and open **http://192.168.4.1/**.
+3. **Join the rabbit's Wi-Fi** (`Nabaztag` + six characters from the ESP32's
+   MAC address, e.g. `Nabaztag3A1F7C`) and open **http://192.168.4.1/**.
 4. **Optionally, put it on your home Wi-Fi**: in the web app open
    **Connection → Home Wi-Fi**, press **Scan**, pick your network, enter its
    password and press **Save & connect**. Then rejoin your home Wi-Fi and open

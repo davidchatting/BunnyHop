@@ -113,7 +113,7 @@ report LED colours).
 ### Wi-Fi status (`wifi` command)
 
 ```json
-{"ap": "Nabaztag82DE00", "private": true, "apClients": 1, "rabbitSn": "0013d382de00",
+{"ap": "Nabaztag3A1F7C", "private": true, "apClients": 1, "rabbitSn": "0013d382de00",
  "lan": {"ssid": "UniFi", "state": "connected", "ip": "192.168.1.71", "host": "bunnyhop.local"}, ...}
 ```
 

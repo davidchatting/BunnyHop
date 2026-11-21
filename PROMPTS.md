@@ -304,3 +304,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 32.
 
 > when ghost no circles as no interaction possible,then show screenshot
+
+## 33.
+
+> ok, instead of using the Nabaztag mac address use the esp32 mac address the same way

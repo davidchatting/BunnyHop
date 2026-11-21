@@ -84,11 +84,14 @@ static void startAp(const String &ssid, bool hidden = apHidden) {
     LOGI("wifi", "AP '%s' up at %s%s", ap.c_str(), WiFi.softAPIP().toString().c_str(), hidden ? " (hidden)" : "");
 }
 
-static String ssidFromBssid(const String &bssid) {
-    String s = bssid;
-    s.replace(":", "");
-    s.toUpperCase();
-    return String(AP_SSID_PREFIX) + s.substring(6);
+// Our AP SSID: the prefix + the last 3 bytes of the ESP32's own AP MAC, so it
+// is fixed from the first boot and doesn't change when a rabbit pairs.
+static String ownSsid() {
+    uint8_t m[6];
+    esp_read_mac(m, ESP_MAC_WIFI_SOFTAP);
+    char s[7];
+    snprintf(s, sizeof s, "%02X%02X%02X", m[3], m[4], m[5]);
+    return String(AP_SSID_PREFIX) + s;
 }
 
 // AP-side diagnostics: who associates, who gets an address, and whether
@@ -151,7 +154,9 @@ void begin() {
     WiFi.mode(WIFI_AP_STA);
     WiFi.setSleep(false);
     String saved = store::get(K_AP_SSID);
-    startAp(saved.length() ? saved : String(AP_FALLBACK_SSID));
+    // A rabbit paired by an older version was told a name derived from its own
+    // MAC: keep that until it is paired again.
+    startAp(saved.length() ? saved : ownSsid());
     if (!saved.length()) {
         LOGI("wifi", "not provisioned yet - will scan for a rabbit in setup mode%s", AUTO_PAIR ? "" : " (auto-pair disabled)");
         pairRequested = AUTO_PAIR;
@@ -399,12 +404,10 @@ bool pair() {
         return false;
     }
     auto fields = scrapeForm(page);
-    // Our AP SSID: keep the existing one when re-pairing the same rabbit
-    String newAp = store::get(K_AP_SSID);
+    String newAp = ownSsid();
     String text = textOnly(page);
     String serial = after(text, "Serial number:");
     String firmware = after(text, "Firmware:");
-    if (newAp.isEmpty() || store::get(K_SETUP_BSSID) != bssid) newAp = ssidFromBssid(serial.length() == 17 ? serial : bssid);
     String info = "serial " + serial + ", loader firmware " + firmware + ", setup SSID " + ssid;
     store::set(K_SETUP_INFO, info);
     store::set(K_SETUP_BSSID, bssid);

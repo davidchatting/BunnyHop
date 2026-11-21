@@ -37,24 +37,28 @@ pio run -t uploadfs      # web app, bootcode, sample audio (LittleFS)
 
 ## First-time setup
 
-1. Power the ESP32. It starts an AP called `BunnyHop` and scans for a
-   rabbit in setup mode.
+1. Power the ESP32. It starts its AP, `Nabaztag` + the last three bytes of
+   the ESP32's own MAC address (e.g. `Nabaztag3A1F7C`), and scans for a
+   rabbit in setup mode. The name never changes, so you can join it now.
 2. Put the rabbit into setup mode: unplug it, hold the button on its head while
    plugging it back in, release when **all LEDs are blue**.
 3. Within ~30 s the bridge joins the rabbit's `NabaztagXX` network, reads its
    setup page, and submits it with the bridge's AP as the Wi-Fi network and the
    bridge as the "Violet Platform". The rabbit restarts by itself.
-4. The bridge switches its AP to `Nabaztag` + the rabbit's last three MAC bytes
-   (e.g. `Nabaztag82DE00`). The rabbit joins, downloads the bootcode and logs in.
-5. Join that Wi-Fi network from any device and open **http://192.168.4.1/**.
+4. The rabbit joins the bridge's AP, downloads the bootcode and logs in.
+5. Join the bridge's Wi-Fi network from any device and open **http://192.168.4.1/**.
    (Phones may show it as a captive portal; you can also open it in a browser.)
 6. Optionally put BunnyHop on your home Wi-Fi (see [Networks](#networks) below).
 
 The network is **open** (no password) - the rabbit's 2005 Wi-Fi stack needs
 it. On later boots the bridge restores its AP and the rabbit reconnects by
 itself. If the rabbit doesn't appear for 3 minutes, the bridge rescans for a
-rabbit in setup mode every minute; "Find & pair rabbit" in the web app or
+rabbit in setup mode every minute; "Pair a rabbit" in the web app or
 `pair` on the serial console does it on demand.
+
+A rabbit paired by an older version of BunnyHop was given a network name
+made from the rabbit's MAC address. The bridge keeps using that name until
+the rabbit is paired again.
 
 ## Networks
 
@@ -63,7 +67,7 @@ the same time join your **home Wi-Fi**:
 
 | | Home Wi-Fi connected | Home Wi-Fi not set or unreachable |
 |---|---|---|
-| Rabbit's network (`Nabaztag82DE00`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
+| Rabbit's network (`Nabaztag3A1F7C`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
 | Web app | `http://bunnyhop.local/` on your home network | `http://192.168.4.1/` on the rabbit's network |
 
 - Set home Wi-Fi in the web app: **Connection → Home Wi-Fi → Scan**, pick the
