@@ -11,7 +11,7 @@
 #define AP_IP_D 1
 #define AP_IP_STR "192.168.4.1"
 // Plain alphanumeric SSIDs: the rabbit's 2005-era Wi-Fi stack is fussy.
-#define AP_SSID_PREFIX "Nabaztag"  // + last 3 bytes of the ESP32's AP MAC, e.g. Nabaztag3A1F7C
+#define AP_SSID_PREFIX "BunnyHop"  // + last 3 bytes of the ESP32's AP MAC, e.g. BunnyHop3A1F7C
 #define AP_CHANNEL 1
 #define AP_MAX_CLIENTS 8
 

@@ -14,7 +14,7 @@ What has been tested, and how. Open problems are tracked as
 | Provisioning via the rabbit's own setup page (`/b.htm`) | **Physically tested** | Rabbit restarts and joins the bridge's AP |
 | Reading serial number + loader firmware from setup page | **Physically tested** | `00:13:d3:82:de:00`, `0.0.0.10` |
 | AP with SSID derived from the rabbit (`Nabaztag` + last 3 MAC bytes) | **Physically tested** | Replaced by the ESP32-derived name below |
-| AP with SSID derived from the ESP32 (`Nabaztag` + last 3 bytes of its AP MAC), fixed from first boot | **Builds; not yet tested on hardware** | |
+| AP with SSID derived from the ESP32 (`BunnyHop` + last 3 bytes of its AP MAC), fixed from first boot | **Builds; not yet tested on hardware** | |
 | Rabbit boot: bootcode → locate → XMPP login → ready (~20 s) | **Physically tested** | Serial log |
 | Automatic reconnect after a bridge restart | **Physically tested** | Recovered in 85 s unattended |
 | Ears: left/right positioning, independent | **Physically tested** | Camera |

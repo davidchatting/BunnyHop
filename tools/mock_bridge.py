@@ -32,7 +32,7 @@ state = {
     "ears": {"left": 0, "right": 0, "cmdLeft": -1, "cmdRight": -1},
     "leds": ["#000000"] * 5, "lastTag": "", "lastClick": 0, "lastRecording": "",
 }
-wifi = {"ap": "Nabaztag-MOCK01", "paired": True, "apClients": 1, "setupSsid": "Nabaztag01",
+wifi = {"ap": "BunnyHopM0CK01", "paired": True, "apClients": 1, "setupSsid": "Nabaztag01",
         "setupBssid": "", "setupInfo": "mock", "rabbitSn": state["sn"], "lastPair": "mock"}
 log = []
 

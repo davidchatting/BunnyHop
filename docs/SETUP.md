@@ -37,8 +37,8 @@ pio run -t uploadfs      # web app, bootcode, sample audio (LittleFS)
 
 ## First-time setup
 
-1. Power the ESP32. It starts its AP, `Nabaztag` + the last three bytes of
-   the ESP32's own MAC address (e.g. `Nabaztag3A1F7C`), and scans for a
+1. Power the ESP32. It starts its AP, `BunnyHop` + the last three bytes of
+   the ESP32's own MAC address (e.g. `BunnyHop3A1F7C`), and scans for a
    rabbit in setup mode. The name never changes, so you can join it now.
 2. Put the rabbit into setup mode: unplug it, hold the button on its head while
    plugging it back in, release when **all LEDs are blue**.
@@ -56,9 +56,8 @@ itself. If the rabbit doesn't appear for 3 minutes, the bridge rescans for a
 rabbit in setup mode every minute; "Pair a rabbit" in the web app or
 `pair` on the serial console does it on demand.
 
-A rabbit paired by an older version of BunnyHop was given a network name
-made from the rabbit's MAC address. The bridge keeps using that name until
-the rabbit is paired again.
+A rabbit paired by an older version of BunnyHop was given a different
+network name (`Nabaztag` + its own MAC) and has to be paired again.
 
 ## Networks
 
@@ -67,7 +66,7 @@ the same time join your **home Wi-Fi**:
 
 | | Home Wi-Fi connected | Home Wi-Fi not set or unreachable |
 |---|---|---|
-| Rabbit's network (`Nabaztag3A1F7C`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
+| Rabbit's network (`BunnyHop3A1F7C`) | **Private**: no password, **hidden**, and every device except the rabbit is disconnected straight away | **Public**: visible and open; joining it pops up the web app (captive portal) |
 | Web app | `http://bunnyhop.local/` on your home network | `http://192.168.4.1/` on the rabbit's network |
 
 - Set home Wi-Fi in the web app: **Connection → Home Wi-Fi → Scan**, pick the

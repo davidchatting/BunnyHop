@@ -2,7 +2,7 @@
 
 ```
  phones / laptops ──HTTP + WebSocket──┐
-                                      │   ESP32  (AP "Nabaztag3A1F7C", 192.168.4.1)
+                                      │   ESP32  (AP "BunnyHop3A1F7C", 192.168.4.1)
                                       │    ├─ web app + REST + WebSocket   :80
  Nabaztag:tag ──HTTP: bc.jsp, locate.jsp, rfid.jsp, record.jsp ──┤   :80
               ──HTTP: choreographies + audio (lingering server) ─┤   :8080

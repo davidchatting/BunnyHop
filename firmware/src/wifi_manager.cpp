@@ -154,9 +154,7 @@ void begin() {
     WiFi.mode(WIFI_AP_STA);
     WiFi.setSleep(false);
     String saved = store::get(K_AP_SSID);
-    // A rabbit paired by an older version was told a name derived from its own
-    // MAC: keep that until it is paired again.
-    startAp(saved.length() ? saved : ownSsid());
+    startAp(ownSsid());
     if (!saved.length()) {
         LOGI("wifi", "not provisioned yet - will scan for a rabbit in setup mode%s", AUTO_PAIR ? "" : " (auto-pair disabled)");
         pairRequested = AUTO_PAIR;

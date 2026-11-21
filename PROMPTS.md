@@ -308,3 +308,7 @@ Clarifying answers are included where they changed the direction of the work.
 ## 33.
 
 > ok, instead of using the Nabaztag mac address use the esp32 mac address the same way
+
+## 34.
+
+> we're going to repair the rabbit its ok, buit now the network should be called BunnyHopXXXXXX

@@ -41,7 +41,7 @@ rabbit is an open access point `NabaztagXX` at `192.168.0.1` with **no DHCP**
 - **Open** network (WPA is offered by the form but untested).
 - **802.11b-only AP.** With 11g/n enabled the ESP32 transmits OFDM frames the
   rabbit cannot decode.
-- Plain alphanumeric SSID (`Nabaztag3A1F7C`); the bridge avoids punctuation.
+- Plain alphanumeric SSID (`BunnyHop3A1F7C`); the bridge avoids punctuation.
 - DHCP from the bridge; the rabbit also uses DNS and NTP - the bridge answers
   every DNS name with itself and runs a minimal NTP responder (time is set by
   the first browser that connects).
